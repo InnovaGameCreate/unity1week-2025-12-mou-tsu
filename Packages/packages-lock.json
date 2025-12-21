@@ -1,5 +1,18 @@
 {
   "dependencies": {
+    "com.cysharp.unitask": {
+      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "73a63b7f672b88f7e9992f6917eb458a8cbb6fa9"
+    },
+    "com.unity.2d.sprite": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {}
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.9",
       "depth": 0,
@@ -136,6 +149,13 @@
         "com.unity.mathematics": "1.2.4",
         "com.unity.modules.terrain": "1.0.0"
       }
+    },
+    "com.unity.search.extensions": {
+      "version": "https://github.com/Unity-Technologies/com.unity.search.extensions.git?path=package",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "a530b7d4fb24a57a815995aa60564f42568a993d"
     },
     "com.unity.searcher": {
       "version": "4.9.3",
