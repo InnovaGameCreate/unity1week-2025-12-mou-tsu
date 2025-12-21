@@ -12,3 +12,9 @@ MemoryCaptures/
 
 .DS_Store
 Thumbs.db
+
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
