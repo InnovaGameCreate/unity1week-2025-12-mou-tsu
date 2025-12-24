@@ -54,9 +54,11 @@ public class StickFitJudgeRx : MonoBehaviour
 
     private readonly Subject<FitProgress> onProgress = new Subject<FitProgress>();
     private readonly Subject<Unit> onCleared = new Subject<Unit>();
+    private readonly Subject<Unit> onFailed = new Subject<Unit>();
 
     public IObservable<FitProgress> OnProgressAsObservable => onProgress;
     public IObservable<Unit> OnClearedAsObservable => onCleared;
+    public IObservable<Unit> OnFailedAsObservable => onFailed;
 
     private bool resolved;
     private bool enableFailureJudgment;
@@ -172,6 +174,12 @@ public class StickFitJudgeRx : MonoBehaviour
     {
         if (resolved || trackingState == null) return;
         if (target == null || !target.IsValid) return;
+
+        if (!target.gameObject.activeInHierarchy)
+        {
+            OnFailed();
+            return;
+        }
 
         var state = trackingState;
         if (state.line == null || state.rb == null) return;
@@ -327,6 +335,8 @@ public class StickFitJudgeRx : MonoBehaviour
             });
         }
 
+        onFailed.OnNext(Unit.Default);
+
         if (restartOnFail)
         {
             Observable.Timer(TimeSpan.FromSeconds(restartDelaySeconds))
@@ -457,5 +467,8 @@ public class StickFitJudgeRx : MonoBehaviour
 
         onCleared.OnCompleted();
         onCleared.Dispose();
+
+        onFailed.OnCompleted();
+        onFailed.Dispose();
     }
 }

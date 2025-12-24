@@ -41,7 +41,8 @@ public class SamplePressAnyKeyBlink : MonoBehaviour
         blinkTween = pressAnyKeyText
             .DOFade(1f, blinkInterval)
             .SetLoops(-1, LoopType.Yoyo)
-            .SetEase(Ease.InOutSine);
+            .SetEase(Ease.InOutSine)
+            .SetLink(pressAnyKeyText.gameObject, LinkBehaviour.KillOnDestroy);
     }
 
     private void OnDestroy()

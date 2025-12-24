@@ -15,6 +15,7 @@ public class SampleTitleLogoAnim : MonoBehaviour
         canvasGroup
             .DOFade(1f, fadeTime)
             .SetDelay(delay)
-            .SetEase(Ease.OutQuad);
+            .SetEase(Ease.OutQuad)
+            .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
     }
 }

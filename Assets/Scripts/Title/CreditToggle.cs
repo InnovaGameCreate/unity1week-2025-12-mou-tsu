@@ -95,7 +95,7 @@ public class CreditToggle : MonoBehaviour
             seq.Join(panelRect.DOScale(1f, openDuration).SetEase(openEase));
 
         seq.OnComplete(() => state.Value = PanelState.Open);
-        panelTween = seq;
+        panelTween = seq.SetLink(creditPanel, LinkBehaviour.KillOnDestroy);
     }
 
     public void Close()
@@ -117,7 +117,7 @@ public class CreditToggle : MonoBehaviour
             seq.Join(panelRect.DOScale(closeToScale, closeDuration).SetEase(closeEase));
 
         seq.OnComplete(ApplyClosedInstant);
-        panelTween = seq;
+        panelTween = seq.SetLink(creditPanel, LinkBehaviour.KillOnDestroy);
     }
 
     private void ApplyClosedInstant()
