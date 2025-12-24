@@ -33,6 +33,9 @@ public class DrawLineFromClick : MonoBehaviour
     [SerializeField] private MonoBehaviour startPointOverrideSource; // IStartPointOverride2D を実装したコンポーネント（例: StickStartGuide2D）
     private IStartPointOverride2D startPointOverride;
 
+    [Header("生成ラインのタグ設定")]
+    [SerializeField, Tooltip("生成したLineRendererに自動で付与するタグ。空なら何もしない")] private string lineTag = "";
+
     private LineRenderer currentLine;
     private LineRenderer currentShadowLine;
 
@@ -148,6 +151,7 @@ public class DrawLineFromClick : MonoBehaviour
                 currentLine.SetPosition(1, currentEndPos);
                 currentLine.sortingLayerName = sortingLayerName;
                 currentLine.sortingOrder = mainSortingOrder;
+                ApplyTagIfNeeded(currentLine);
 
                 currentShadowLine = null;
                 if (useShadow)
@@ -168,6 +172,8 @@ public class DrawLineFromClick : MonoBehaviour
 
                     currentShadowLine.SetPosition(0, startPos + shadowOffsetWorld);
                     currentShadowLine.SetPosition(1, currentEndPos + shadowOffsetWorld);
+
+                    ApplyTagIfNeeded(currentShadowLine);
                 }
 
                 onPressDown.OnNext(startPos);
@@ -239,6 +245,13 @@ public class DrawLineFromClick : MonoBehaviour
         worldPos.z = 0f;
         hasForcedStart = true;
         forcedStartPos = worldPos;
+    }
+
+    private void ApplyTagIfNeeded(LineRenderer lr)
+    {
+        if (lr == null) return;
+        if (string.IsNullOrEmpty(lineTag)) return;
+        lr.gameObject.tag = lineTag;
     }
 
     void OnDestroy()
