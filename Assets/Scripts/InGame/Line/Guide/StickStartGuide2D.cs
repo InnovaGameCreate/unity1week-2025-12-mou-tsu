@@ -20,6 +20,10 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
     [Header("配置設定")]
     [SerializeField] private float verticalOffset = 2.0f;
 
+    [Header("ガイド表示設定")]
+    [SerializeField, Tooltip("ガイド（赤丸と点線）を表示するか")]
+    private bool showGuide = true;
+
     [Header("クリック判定（赤丸の半径：自動）")]
     [SerializeField, Tooltip("赤丸SpriteRendererの見た目から自動計算されます（手入力不要）")]
     private float markerRadius = 0.3f;
@@ -41,6 +45,9 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
         UpdateMarkerRadiusFromSprite();
 
         SetupDottedLine();
+
+        // 初期表示状態を適用
+        UpdateGuideVisibility();
     }
 
     private void SetupMarkerPosition()
@@ -93,6 +100,55 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
 
         startWorld = default;
         return false;
+    }
+
+    /// <summary>
+    /// ガイドの表示/非表示を切り替える（ボタン用）
+    /// </summary>
+    public void ToggleGuide()
+    {
+        showGuide = !showGuide;
+        UpdateGuideVisibility();
+    }
+
+    /// <summary>
+    /// ガイドを表示する
+    /// </summary>
+    public void ShowGuide()
+    {
+        showGuide = true;
+        UpdateGuideVisibility();
+    }
+
+    /// <summary>
+    /// ガイドを非表示にする
+    /// </summary>
+    public void HideGuide()
+    {
+        showGuide = false;
+        UpdateGuideVisibility();
+    }
+
+    /// <summary>
+    /// ガイドの表示状態を取得
+    /// </summary>
+    public bool IsGuideVisible()
+    {
+        return showGuide;
+    }
+
+    /// <summary>
+    /// ガイドの表示/非表示を実際に適用
+    /// </summary>
+    private void UpdateGuideVisibility()
+    {
+        // 赤丸は常に表示
+        if (startPointMarker != null)
+            startPointMarker.enabled = true;
+
+        // 赤い点線だけをオンオフ
+        if (dottedLine != null)
+            dottedLine.enabled = showGuide;
     }
 
 #if UNITY_EDITOR
