@@ -17,6 +17,10 @@ public class FitTargetSegment2D : MonoBehaviour
     [SerializeField] private Collider2D snapCollider;
     [SerializeField] private bool autoCreateSnapCollider = true;
 
+    [Header("スナップコライダー同期設定")]
+    [SerializeField, Tooltip("true: Spriteの形状から位置/角度/サイズを自動同期する。false: コライダーを手動配置したまま保持する")]
+    private bool autoSyncSnapColliderTransform = true;
+
     [Tooltip("正解形の中心から、ワールド下方向にどれだけズラすか")]
     [SerializeField] private float snapColliderYOffset = -0.02f;
 
@@ -49,7 +53,7 @@ public class FitTargetSegment2D : MonoBehaviour
         EnsureSnapCollider();
         DisableSnapCollider();
         RecalculateEndpoints();
-        SyncSnapCollider();
+        if (autoSyncSnapColliderTransform) SyncSnapCollider();
     }
 
     void OnValidate()
@@ -57,7 +61,7 @@ public class FitTargetSegment2D : MonoBehaviour
         if (targetSprite == null) targetSprite = GetComponent<SpriteRenderer>();
         EnsureSnapCollider();
         RecalculateEndpoints();
-        SyncSnapCollider();
+        if (autoSyncSnapColliderTransform) SyncSnapCollider();
     }
 
     private void EnsureSnapCollider()
@@ -115,6 +119,7 @@ public class FitTargetSegment2D : MonoBehaviour
     {
         if (snapCollider == null) return;
         if (!IsValid) return;
+        if (!autoSyncSnapColliderTransform) return; // 手動配置を保持
 
         Vector2 center = GetCenter();
         float len = GetLength();
