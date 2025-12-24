@@ -104,6 +104,15 @@ public class DrawLineFromClick : MonoBehaviour
             .Share();
 
         pressDown
+            .Where(pos =>
+            {
+                // 赤丸以外の位置からは線を引けない
+                if (startPointOverride != null)
+                {
+                    return startPointOverride.TryOverrideStartPoint(pos, out _);
+                }
+                return true; // startPointOverrideがない場合は制限なし
+            })
             .Subscribe(pos =>
             {
                 hasDrawnOnce = true;

@@ -2241,7 +2241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   judge: {fileID: 430045647}
-  nextSceneName: Stage6
+  nextSceneName: Title
   persistRoot: {fileID: 1791296829}
   cutInRect: {fileID: 1006219129}
   waitSeconds: 2.5
@@ -2559,9 +2559,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
-    width: 1
-    height: 1
+    y: 0.48703703
+    width: 0.47500002
+    height: 0.475
   near clip plane: 0.3
   far clip plane: 10
   field of view: 60

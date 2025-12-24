@@ -157,6 +157,13 @@ public class StickFitJudgeRx : MonoBehaviour
                     .Where(_ => clearSignaled && !snapped)
                     .Subscribe(_ => TrySnapIfTouching())
                     .AddTo(this);
+
+                // ✅ クリア後に一定時間経っても停止しない場合は強制スナップ（フェイルセーフ）
+                Observable.Timer(TimeSpan.FromSeconds(0.5f))
+                    .Where(_ => clearSignaled && !snapped)
+                    .Take(1)
+                    .Subscribe(_ => ForceSnapOnClear())
+                    .AddTo(this);
             })
             .AddTo(this);
     }
@@ -263,6 +270,25 @@ public class StickFitJudgeRx : MonoBehaviour
 
         if (trackingState.col != null && trackingState.col.IsTouching(target.SnapCollider))
             SnapNow();
+    }
+
+    /// <summary>
+    /// クリア判定後、衝突検出に失敗した場合でも強制的に正解位置にスナップする
+    /// </summary>
+    private void ForceSnapOnClear()
+    {
+        if (snapped) return;
+        if (trackingState == null || target == null) return;
+
+        snapped = true;
+
+        Vector2 a = target.Start;
+        Vector2 b = target.End;
+
+        SnapToTarget(trackingState.line, trackingState.shadow, trackingState.rb, a, b);
+
+        if (target.SnapCollider != null)
+            target.DisableSnapCollider();
     }
 
     private void SnapNow()
