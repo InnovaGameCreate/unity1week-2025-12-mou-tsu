@@ -428,6 +428,66 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &366261080
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 366261082}
+  - component: {fileID: 366261081}
+  m_Layer: 0
+  m_Name: Gimmick_TsuMover
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &366261081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 366261080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b77b7fba760e2ff40a6d567b8f99f1e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tsu: {fileID: 892266381}
+  amplitudeX: 2
+  amplitudeY: 0
+  periodX: 2.2
+  periodY: 1.4
+  phaseDelayY: 0
+  waveEase: 4
+  correctBarSprite: {fileID: 349984075}
+  fixedEndMode: 0
+  fixedStartAnchor: {fileID: 0}
+  leftDistanceFromTsu: 0.8
+  additionalOffsetWorld: {x: -0.2, y: 0.014429, z: 0}
+  targetLine: {fileID: 0}
+  barBaseLength: 1
+  judgeRx: {fileID: 430045647}
+  syncJudgeTargetEveryFrame: 1
+--- !u!4 &366261082
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 366261080}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.10105972, y: 0.6028075, z: -0.032214586}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &396391681
 GameObject:
   m_ObjectHideFlags: 0
@@ -1395,7 +1455,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   judge: {fileID: 430045647}
-  nextSceneName: Stage8
+  nextSceneName: Title
   persistRoot: {fileID: 1791296829}
   cutInRect: {fileID: 1006219129}
   waitSeconds: 2.5
@@ -1954,90 +2014,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &1122159202
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1122159204}
-  - component: {fileID: 1122159203}
-  - component: {fileID: 1122159205}
-  m_Layer: 0
-  m_Name: Gimmick_BlinkManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1122159203
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1122159202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 63a1e96a093af1346b4d5c6109abadc4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  blinkItems:
-  - target: {fileID: 892266380}
-    visibleAlpha255: 255
-    canvasGroup: {fileID: 0}
-    spriteRenderers: []
-  - target: {fileID: 349984072}
-    visibleAlpha255: 185
-    canvasGroup: {fileID: 0}
-    spriteRenderers: []
-  - target: {fileID: 1077876894}
-    visibleAlpha255: 0
-    canvasGroup: {fileID: 0}
-    spriteRenderers: []
-  tsuObject: {fileID: 892266380}
-  targetObject: {fileID: 349984072}
-  visibleDuration: 1
-  invisibleDuration: 2
-  fadeDuration: 0.2
-  tsuVisibleAlpha255: 255
-  targetVisibleAlpha255: 185
-  autoStart: 1
-  collidersToControl: []
-  objectsToControl: []
-  judgeRxToControl: []
-  stopBlinkOnClear: 1
---- !u!4 &1122159204
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1122159202}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.29549024, y: 0.1470457, z: -0.026382817}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1122159205
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1122159202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99b41fd7d63d6a742ad4af8823ff1872, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  judgeRx: {fileID: 430045647}
-  blinkingController: {fileID: 1122159203}
 --- !u!114 &1155706987 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 305420488285327222, guid: 5f0780f1782484a45b265b5c5e219889, type: 3}
@@ -2950,7 +2926,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9158486931232404196, guid: 5f0780f1782484a45b265b5c5e219889, type: 3}
       propertyPath: m_text
-      value: Stage7
+      value: Stage8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2970,4 +2946,4 @@ SceneRoots:
   - {fileID: 1484444764}
   - {fileID: 1234481881}
   - {fileID: 430045648}
-  - {fileID: 1122159204}
+  - {fileID: 366261082}
