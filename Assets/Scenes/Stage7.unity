@@ -819,7 +819,10 @@ MonoBehaviour:
   stoppedVelocityThreshold: 0.1
   stoppedTimeTolerance: 0.2
   failureJudgmentDelaySeconds: 0.5
-  snapMode: 2
+  snapLengthToTarget: 0
+  alignXPosition: 0
+  alignYPosition: 1
+  alignRotationAngles: 0
 --- !u!4 &430045648
 Transform:
   m_ObjectHideFlags: 0
