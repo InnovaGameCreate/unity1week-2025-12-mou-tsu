@@ -40,6 +40,18 @@ public class StickFitJudgeRx : MonoBehaviour
     [SerializeField] private float stoppedTimeTolerance = 0.5f;
     [SerializeField] private float failureJudgmentDelaySeconds = 1f;
 
+    public enum SnapMode
+    {
+        SnapAll,                    // 1. 長さも位置角度も正解にスナップ
+        KeepLengthAlignPose,        // 2. 長さは維持し、位置と角度のみ合わせる
+        KeepLengthAlignYOnly,       // 3. 長さ・X位置・角度は変えず、y座標のみ合わせる
+        FreezeAll                   // 4. 長さ・位置・角度を変えずに停止
+    }
+
+    [Header("クリア後のスナップ設定")]
+    [SerializeField, Tooltip("クリア時のスナップ挙動を選択")]
+    private SnapMode snapMode = SnapMode.SnapAll;
+
     public struct FitProgress
     {
         public LineRenderer line;
@@ -69,6 +81,10 @@ public class StickFitJudgeRx : MonoBehaviour
 
     // 外部から判定を一時停止する機能（Stage7の点滅ギミック用）
     private bool judgmentSuspended = false;
+
+    private Vector2 targetStartWorld;
+    private Vector2 targetEndWorld;
+    private bool hasDynamicTarget;
 
     /// <summary>
     /// 判定を一時停止/再開する（非表示中は判定しない）
@@ -199,8 +215,8 @@ public class StickFitJudgeRx : MonoBehaviour
         // 棒の端点（ワールド）
         GetStickWorldEndpoints(state.line, out Vector2 stickStart, out Vector2 stickEnd);
 
-        Vector2 targetStart = target.Start;
-        Vector2 targetEnd = target.End;
+        Vector2 targetStart = hasDynamicTarget ? targetStartWorld : target.Start;
+        Vector2 targetEnd = hasDynamicTarget ? targetEndWorld : target.End;
 
         float stickLen = Vector2.Distance(stickStart, stickEnd);
         float targetLen = Vector2.Distance(targetStart, targetEnd);
@@ -420,24 +436,62 @@ public class StickFitJudgeRx : MonoBehaviour
         float len = dir.magnitude;
         if (len <= 0.0001f) return;
 
-        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        // 現在の棒長（ワールド）と姿勢を取得
+        GetStickWorldEndpoints(line, out Vector2 curStart, out Vector2 curEnd);
+        float currentLen = Vector2.Distance(curStart, curEnd);
+        float snapLen = len; // default
+
+        float snapAngle;
+        Vector2 snapCenter;
+
+        switch (snapMode)
+        {
+            case SnapMode.SnapAll:
+                // 1. 長さも位置角度も正解にスナップ
+                snapLen = len;
+                snapAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+                snapCenter = center;
+                break;
+
+            case SnapMode.KeepLengthAlignPose:
+                // 2. 長さを維持し、位置と角度のみ合わせる
+                snapLen = currentLen;
+                if (snapLen <= 0.0001f) snapLen = len;
+                snapAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+                snapCenter = center;
+                break;
+
+            case SnapMode.KeepLengthAlignYOnly:
+                // 3. 長さ・X位置・角度は変えず、y座標のみ合わせる
+                snapLen = currentLen;
+                if (snapLen <= 0.0001f) snapLen = len;
+                snapAngle = Mathf.Atan2((curEnd - curStart).y, (curEnd - curStart).x) * Mathf.Rad2Deg;
+                // X位置は現在のままで、y座標だけ合わせる
+                Vector2 curCenter = (curStart + curEnd) * 0.5f;
+                snapCenter = new Vector2(curCenter.x, center.y);
+                break;
+
+            case SnapMode.FreezeAll:
+            default:
+                // 4. 長さ・位置・角度を変えずに停止（物理だけ停止）
+                return;
+        }
 
         var t = line.transform;
-        t.position = new Vector3(center.x, center.y, t.position.z);
-        t.rotation = Quaternion.Euler(0f, 0f, angle);
+        t.position = new Vector3(snapCenter.x, snapCenter.y, t.position.z);
+        t.rotation = Quaternion.Euler(0f, 0f, snapAngle);
 
-        // ピタッと：長さも正解に合わせる（±5%許容でも、成功時は正解に吸着）
         line.useWorldSpace = false;
         line.positionCount = 2;
-        line.SetPosition(0, new Vector3(-len * 0.5f, 0f, 0f));
-        line.SetPosition(1, new Vector3( len * 0.5f, 0f, 0f));
+        line.SetPosition(0, new Vector3(-snapLen * 0.5f, 0f, 0f));
+        line.SetPosition(1, new Vector3( snapLen * 0.5f, 0f, 0f));
 
         if (shadow != null)
         {
             shadow.useWorldSpace = false;
             shadow.positionCount = 2;
-            shadow.SetPosition(0, new Vector3(-len * 0.5f, 0f, 0f));
-            shadow.SetPosition(1, new Vector3( len * 0.5f, 0f, 0f));
+            shadow.SetPosition(0, new Vector3(-snapLen * 0.5f, 0f, 0f));
+            shadow.SetPosition(1, new Vector3( snapLen * 0.5f, 0f, 0f));
             shadow.sortingLayerID = line.sortingLayerID;
             shadow.sortingOrder = line.sortingOrder - 1;
         }
@@ -445,7 +499,7 @@ public class StickFitJudgeRx : MonoBehaviour
         var box = line.GetComponent<BoxCollider2D>();
         if (box != null)
         {
-            box.size = new Vector2(len, box.size.y);
+            box.size = new Vector2(snapLen, box.size.y);
             box.offset = Vector2.zero;
         }
     }
@@ -471,6 +525,14 @@ public class StickFitJudgeRx : MonoBehaviour
     private int ToPercent(float rate01)
     {
         return Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp01(rate01) * 100f), 0, 100);
+    }
+
+    // TsuMoverから毎フレーム呼ばれる
+    public void SetTargetSegment(Vector3 startWorld, Vector3 endWorld)
+    {
+        targetStartWorld = startWorld;
+        targetEndWorld = endWorld;
+        hasDynamicTarget = true;
     }
 
     void OnDestroy()
