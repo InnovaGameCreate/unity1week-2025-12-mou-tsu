@@ -67,6 +67,17 @@ public class StickFitJudgeRx : MonoBehaviour
     private bool clearSignaled;
     private bool snapped;
 
+    // 外部から判定を一時停止する機能（Stage7の点滅ギミック用）
+    private bool judgmentSuspended = false;
+
+    /// <summary>
+    /// 判定を一時停止/再開する（非表示中は判定しない）
+    /// </summary>
+    public void SetJudgmentSuspended(bool suspended)
+    {
+        judgmentSuspended = suspended;
+    }
+
     private class TrackingState
     {
         public LineRenderer line;
@@ -174,6 +185,7 @@ public class StickFitJudgeRx : MonoBehaviour
     {
         if (resolved || trackingState == null) return;
         if (target == null || !target.IsValid) return;
+        if (judgmentSuspended) return; // 判定が一時停止中はスキップ
 
         if (!target.gameObject.activeInHierarchy)
         {
@@ -247,7 +259,8 @@ public class StickFitJudgeRx : MonoBehaviour
     /// </summary>
     private void SignalClear()
     {
-        if (resolved) return;
+        // 非表示期間など、判定一時停止中はクリア通知しない
+        if (resolved || judgmentSuspended) return;
         resolved = true;
         clearSignaled = true;
 

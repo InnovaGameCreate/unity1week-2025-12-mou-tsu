@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\InGame\Line\DrawLineFromClick.cs" />
     <Compile Include="Assets\Scripts\AudioManager.cs" />
+    <Compile Include="Assets\Scripts\InGame\Gimmick\Blink\BlinkingClearGateRx.cs" />
     <Compile Include="Assets\Scripts\InGame\StageManagement\ToTitleButton.cs" />
     <Compile Include="Assets\Scripts\InGame\Line\Judge\FitRateTextPresenterRx.cs" />
     <Compile Include="Assets\Scripts\InGame\Gimmick\UgokuMove.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="Assets\Scripts\InGame\Animation\CountdownPresenter.cs" />
     <Compile Include="Assets\Scripts\InGame\InGameManager.cs" />
     <Compile Include="Assets\Scripts\Title\SampleGoInGameScene.cs" />
+    <Compile Include="Assets\Scripts\InGame\Gimmick\Blink\BlinkingGimmickController.cs" />
     <Compile Include="Assets\Scripts\InGame\Line\Guide\IStartPointOverride2D.cs" />
     <Compile Include="Assets\Scripts\InGame\Line\Guide\StickStartGuide2D.cs" />
     <Compile Include="Assets\Scripts\InGame\Animation\PerfectPopupAnimator.cs" />
