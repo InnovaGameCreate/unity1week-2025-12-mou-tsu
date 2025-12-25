@@ -4,6 +4,7 @@ using UniRx;
 using DG.Tweening;
 using System.Linq;
 using System.Collections.Generic;
+using UniRx.Triggers;
 
 /// <summary>
 /// Stage7専用：「つ」と「正解位置」を点滅させるギミック
@@ -26,10 +27,11 @@ public class BlinkingGimmickController : MonoBehaviour
     [Header("点滅対象")]
     [SerializeField, Tooltip("点滅対象のリスト（設定されていればこちらを優先）")]
     private List<BlinkItem> blinkItems = new List<BlinkItem>();
-    [SerializeField, Tooltip("点滅させる「つ」オブジェクト")]
+
+    [SerializeField, Tooltip("点滅させる「つ」オブジェクト（blinkItemsを使わない場合に使用）")]
     private GameObject tsuObject;
 
-    [SerializeField, Tooltip("点滅させる「正解位置」オブジェクト")]
+    [SerializeField, Tooltip("点滅させる「正解位置」オブジェクト（blinkItemsを使わない場合に使用）")]
     private GameObject targetObject;
 
     [Header("点滅設定")]
@@ -61,12 +63,23 @@ public class BlinkingGimmickController : MonoBehaviour
     [SerializeField, Tooltip("非表示中に判定を停止するStickFitJudgeRx（判定を完全に停止）")]
     private StickFitJudgeRx[] judgeRxToControl;
 
+    [Header("クリア時挙動")]
+    [SerializeField, Tooltip("クリアを受け取ったら点滅を完全停止し、全て表示に固定する。")]
+    private bool stopBlinkOnClear = true;
+
     // 現在表示中かどうかを外部に公開
     private readonly ReactiveProperty<bool> isVisible = new ReactiveProperty<bool>(false);
     public IReadOnlyReactiveProperty<bool> IsVisibleAsObservable => isVisible;
 
     // 点滅制御用
     private IDisposable blinkingDisposable;
+
+    // ★重要：今動いているSequenceを保持してStop時にKillする
+    private Sequence currentBlinkSequence;
+
+    // ★点滅が有効か（Sequenceのコールバックが残っていても無効化できる）
+    private bool blinkingActive;
+
     private CanvasGroup tsuCanvasGroup;
     private CanvasGroup targetCanvasGroup;
     private SpriteRenderer[] tsuSpriteRenderers;
@@ -74,10 +87,8 @@ public class BlinkingGimmickController : MonoBehaviour
 
     void Awake()
     {
-        // CanvasGroupまたはSpriteRendererを取得・準備
         SetupTransparencyComponents();
 
-        // 判定制御対象が未設定なら自動検出
         if (judgeRxToControl == null || judgeRxToControl.Length == 0)
         {
             judgeRxToControl = UnityEngine.Object.FindObjectsByType<StickFitJudgeRx>(UnityEngine.FindObjectsSortMode.None);
@@ -91,18 +102,15 @@ public class BlinkingGimmickController : MonoBehaviour
             StartBlinking();
         }
 
-        // 表示状態に応じてコライダーやオブジェクトを制御
         isVisible
             .Subscribe(visible => UpdateControlledObjects(visible))
             .AddTo(this);
+
+        SubscribeClearToStopBlink();
     }
 
-    /// <summary>
-    /// 透明度制御用のコンポーネントをセットアップ
-    /// </summary>
     private void SetupTransparencyComponents()
     {
-        // リスト側のセットアップ
         if (blinkItems != null && blinkItems.Count > 0)
         {
             foreach (var item in blinkItems)
@@ -124,7 +132,6 @@ public class BlinkingGimmickController : MonoBehaviour
             {
                 tsuCanvasGroup = tsuObject.AddComponent<CanvasGroup>();
             }
-
             tsuSpriteRenderers = tsuObject.GetComponentsInChildren<SpriteRenderer>(true);
         }
 
@@ -135,7 +142,6 @@ public class BlinkingGimmickController : MonoBehaviour
             {
                 targetCanvasGroup = targetObject.AddComponent<CanvasGroup>();
             }
-
             targetSpriteRenderers = targetObject.GetComponentsInChildren<SpriteRenderer>(true);
         }
     }
@@ -143,10 +149,9 @@ public class BlinkingGimmickController : MonoBehaviour
     void OnDestroy()
     {
         blinkingDisposable?.Dispose();
-        // DOTWEENの安全対策：リンク済みTweenを殺す
         KillAllItemTweens();
+        KillCurrentSequence();
 
-        // 判定を停止しておく
         if (judgeRxToControl != null)
         {
             foreach (var judgeRx in judgeRxToControl)
@@ -158,17 +163,22 @@ public class BlinkingGimmickController : MonoBehaviour
 
     void OnDisable()
     {
-        // 無効化時にもTweenを停止
         KillAllItemTweens();
+        KillCurrentSequence();
     }
+
     /// <summary>
     /// 点滅を開始
     /// </summary>
     public void StartBlinking()
     {
         blinkingDisposable?.Dispose();
+        KillAllItemTweens();
+        KillCurrentSequence();
 
-        // 初期状態を非表示に設定
+        blinkingActive = true;
+
+        // 初期状態を非表示
         if (HasItems())
         {
             SetTransparencyForItems(false);
@@ -181,18 +191,30 @@ public class BlinkingGimmickController : MonoBehaviour
 
         // 点滅ループ
         blinkingDisposable = Observable
-            .Interval(System.TimeSpan.FromSeconds(visibleDuration + invisibleDuration + fadeDuration * 2))
-            .StartWith(0) // 最初のサイクルを即座に開始
-            .Subscribe(_ => BlinkCycle())
+            .Interval(TimeSpan.FromSeconds(visibleDuration + invisibleDuration + fadeDuration * 2))
+            .StartWith(0)
+            .Subscribe(_ =>
+            {
+                if (!blinkingActive) return;
+                BlinkCycle();
+            })
             .AddTo(this);
     }
 
     /// <summary>
-    /// 点滅を停止
+    /// 点滅を停止して「全表示」に固定（クリア時に呼ぶ想定）
     /// </summary>
-    public void StopBlinking()
+    public void StopBlinkingAndShowAll()
     {
+        blinkingActive = false;
+
         blinkingDisposable?.Dispose();
+        KillCurrentSequence();
+
+        // 走ってるDOFade類も止める（ここがないと直前のフェードアウトが残る）
+        KillAllItemTweens();
+
+        // 全表示に固定
         if (HasItems())
         {
             SetTransparencyForItems(true);
@@ -201,7 +223,9 @@ public class BlinkingGimmickController : MonoBehaviour
         {
             SetTransparency(Norm255(tsuVisibleAlpha255), Norm255(targetVisibleAlpha255));
         }
-        isVisible.Value = true;
+
+        isVisible.Value = true;          // これがUpdateControlledObjects(true)に繋がる
+        UpdateControlledObjects(true);   // 念のため明示的に呼ぶ（順序事故を避ける）
     }
 
     /// <summary>
@@ -209,12 +233,19 @@ public class BlinkingGimmickController : MonoBehaviour
     /// </summary>
     private void BlinkCycle()
     {
-        var sequence = DOTween.Sequence();
+        // 既存シーケンスが残ってるとコールバックが競合するので必ずKill
+        KillCurrentSequence();
+
+        currentBlinkSequence = DOTween.Sequence()
+            .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
 
         // フェードイン
-        sequence.AppendCallback(() =>
+        currentBlinkSequence.AppendCallback(() =>
         {
+            if (!blinkingActive) return;
+
             KillAllItemTweens();
+
             if (HasItems())
             {
                 AnimateTransparencyForItems(true, fadeDuration);
@@ -226,14 +257,14 @@ public class BlinkingGimmickController : MonoBehaviour
             isVisible.Value = true;
         });
 
-        sequence.AppendInterval(fadeDuration);
-
-        // 表示状態を維持
-        sequence.AppendInterval(visibleDuration);
+        currentBlinkSequence.AppendInterval(fadeDuration);
+        currentBlinkSequence.AppendInterval(visibleDuration);
 
         // フェードアウト
-        sequence.AppendCallback(() =>
+        currentBlinkSequence.AppendCallback(() =>
         {
+            if (!blinkingActive) return;
+
             if (HasItems())
             {
                 AnimateTransparencyForItems(false, fadeDuration);
@@ -245,18 +276,21 @@ public class BlinkingGimmickController : MonoBehaviour
             isVisible.Value = false;
         });
 
-        sequence.AppendInterval(fadeDuration);
-
-        // 非表示状態を維持
-        sequence.AppendInterval(invisibleDuration);
+        currentBlinkSequence.AppendInterval(fadeDuration);
+        currentBlinkSequence.AppendInterval(invisibleDuration);
     }
 
-    /// <summary>
-    /// 透明度をアニメーション
-    /// </summary>
+    private void KillCurrentSequence()
+    {
+        if (currentBlinkSequence != null && currentBlinkSequence.IsActive())
+        {
+            currentBlinkSequence.Kill();
+        }
+        currentBlinkSequence = null;
+    }
+
     private void AnimateTransparency(float tsuAlpha, float targetAlpha, float duration)
     {
-        // CanvasGroupがある場合
         if (tsuCanvasGroup != null)
         {
             tsuCanvasGroup.DOFade(tsuAlpha, duration)
@@ -264,7 +298,6 @@ public class BlinkingGimmickController : MonoBehaviour
         }
         else if (tsuSpriteRenderers != null && tsuSpriteRenderers.Length > 0)
         {
-            // SpriteRendererの場合（nullチェックを追加）
             foreach (var sr in tsuSpriteRenderers)
             {
                 if (sr != null)
@@ -282,7 +315,6 @@ public class BlinkingGimmickController : MonoBehaviour
         }
         else if (targetSpriteRenderers != null && targetSpriteRenderers.Length > 0)
         {
-            // SpriteRendererの場合（nullチェックを追加）
             foreach (var sr in targetSpriteRenderers)
             {
                 if (sr != null)
@@ -297,6 +329,7 @@ public class BlinkingGimmickController : MonoBehaviour
     private void AnimateTransparencyForItems(bool toVisible, float duration)
     {
         if (!HasItems()) return;
+
         foreach (var item in blinkItems)
         {
             if (item == null || item.target == null) continue;
@@ -321,9 +354,6 @@ public class BlinkingGimmickController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 透明度を即座に設定
-    /// </summary>
     private void SetTransparency(float tsuAlpha, float targetAlpha)
     {
         if (tsuCanvasGroup != null)
@@ -364,6 +394,7 @@ public class BlinkingGimmickController : MonoBehaviour
     private void SetTransparencyForItems(bool toVisible)
     {
         if (!HasItems()) return;
+
         foreach (var item in blinkItems)
         {
             if (item == null || item.target == null) continue;
@@ -388,15 +419,9 @@ public class BlinkingGimmickController : MonoBehaviour
         }
     }
 
-    private static float Norm255(int a)
-    {
-        return Mathf.Clamp01(a / 255f);
-    }
+    private static float Norm255(int a) => Mathf.Clamp01(a / 255f);
 
-    private bool HasItems()
-    {
-        return blinkItems != null && blinkItems.Count > 0;
-    }
+    private bool HasItems() => blinkItems != null && blinkItems.Count > 0;
 
     private void KillAllItemTweens()
     {
@@ -406,25 +431,42 @@ public class BlinkingGimmickController : MonoBehaviour
             if (targetObject != null) DOTween.Kill(targetObject);
             return;
         }
+
         foreach (var item in blinkItems)
         {
             if (item?.target != null) DOTween.Kill(item.target);
         }
     }
 
-    /// <summary>
-    /// 制御対象のコライダー・オブジェクトを有効/無効化
-    /// </summary>
+    private void SubscribeClearToStopBlink()
+    {
+        if (!stopBlinkOnClear) return;
+        if (judgeRxToControl == null || judgeRxToControl.Length == 0) return;
+
+        var streams = judgeRxToControl
+            .Where(j => j != null)
+            .Select(j => j.OnClearedAsObservable)
+            .ToArray();
+
+        if (streams.Length == 0) return;
+
+        Observable.Merge(streams)
+            .Take(1)
+            .Subscribe(_ =>
+            {
+                // クリア時：点滅を止めて全表示に固定
+                StopBlinkingAndShowAll();
+            })
+            .AddTo(this);
+    }
+
     private void UpdateControlledObjects(bool visible)
     {
         if (collidersToControl != null)
         {
             foreach (var col in collidersToControl)
             {
-                if (col != null)
-                {
-                    col.enabled = visible;
-                }
+                if (col != null) col.enabled = visible;
             }
         }
 
@@ -432,38 +474,32 @@ public class BlinkingGimmickController : MonoBehaviour
         {
             foreach (var obj in objectsToControl)
             {
-                if (obj != null)
+                if (obj == null) continue;
+
+                var cg = obj.GetComponent<CanvasGroup>();
+                if (cg != null)
                 {
-                    // SetActiveではなく、CanvasGroupやSpriteRendererの有効化で制御
-                    var cg = obj.GetComponent<CanvasGroup>();
-                    if (cg != null)
+                    cg.alpha = visible ? 1f : 0f;
+                    cg.interactable = visible;
+                    cg.blocksRaycasts = visible;
+                }
+                else
+                {
+                    var renderers = obj.GetComponentsInChildren<SpriteRenderer>(true);
+                    foreach (var sr in renderers)
                     {
-                        cg.alpha = visible ? 1f : 0f;
-                        cg.interactable = visible;
-                        cg.blocksRaycasts = visible;
-                    }
-                    else
-                    {
-                        // SpriteRendererの場合
-                        var renderers = obj.GetComponentsInChildren<SpriteRenderer>();
-                        foreach (var sr in renderers)
-                        {
-                            sr.enabled = visible;
-                        }
+                        if (sr != null) sr.enabled = visible;
                     }
                 }
             }
         }
 
-        // StickFitJudgeRxの判定を制御して、非表示中は判定を完全停止
+        // 非表示中は判定を完全停止
         if (judgeRxToControl != null)
         {
             foreach (var judgeRx in judgeRxToControl)
             {
-                if (judgeRx != null)
-                {
-                    judgeRx.SetJudgmentSuspended(!visible);
-                }
+                if (judgeRx != null) judgeRx.SetJudgmentSuspended(!visible);
             }
         }
     }
