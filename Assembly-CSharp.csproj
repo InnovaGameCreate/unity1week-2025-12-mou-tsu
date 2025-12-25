@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\InGame\Line\DrawLineFromClick.cs" />
+    <Compile Include="Assets\Scripts\Title\ModeMenuUp.cs" />
     <Compile Include="Assets\Scripts\InGame\Gimmick\TsuMover.cs" />
     <Compile Include="Assets\Scripts\AudioManager.cs" />
     <Compile Include="Assets\Scripts\InGame\Gimmick\Blink\BlinkingClearGateRx.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Assets\Scripts\InGame\Line\LineDropOnRelease.cs" />
     <Compile Include="Assets\Scripts\InGame\StageManagement\ReloadSceneButton.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\Scripts\Title\StartButton.cs" />
     <Compile Include="Assets\Scripts\InGame\Animation\CountdownPresenter.cs" />
     <Compile Include="Assets\Scripts\InGame\InGameManager.cs" />
     <Compile Include="Assets\Scripts\Title\SampleGoInGameScene.cs" />
