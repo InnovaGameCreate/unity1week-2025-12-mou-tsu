@@ -458,11 +458,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tsu: {fileID: 892266381}
-  amplitudeX: 2
-  amplitudeY: 0
-  periodX: 2.2
-  periodY: 1.4
-  phaseDelayY: 0
+  amplitudeX: 1.7
+  amplitudeY: 1.7
+  periodX: 1.5
+  periodY: 2.5
+  phaseDelayY: 1
   waveEase: 4
   correctBarSprite: {fileID: 349984075}
   fixedEndMode: 0
@@ -882,7 +882,7 @@ MonoBehaviour:
   snapLengthToTarget: 1
   alignXPosition: 0
   alignYPosition: 1
-  alignRotationAngles: 0
+  alignRotationAngles: 1
 --- !u!4 &430045648
 Transform:
   m_ObjectHideFlags: 0
@@ -1458,7 +1458,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   judge: {fileID: 430045647}
-  nextSceneName: Stage9
+  nextSceneName: Title
   persistRoot: {fileID: 1791296829}
   cutInRect: {fileID: 1006219129}
   waitSeconds: 2.5
@@ -1718,7 +1718,7 @@ MonoBehaviour:
   targetSegment: {fileID: 430045646}
   startPointMarker: {fileID: 1035062001}
   dottedLine: {fileID: 1035062002}
-  verticalOffset: 1
+  verticalOffset: 0.15
   showGuide: 0
   markerRadius: 1
 --- !u!1 &1063651199
@@ -2929,7 +2929,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9158486931232404196, guid: 5f0780f1782484a45b265b5c5e219889, type: 3}
       propertyPath: m_text
-      value: Stage8
+      value: Stage9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

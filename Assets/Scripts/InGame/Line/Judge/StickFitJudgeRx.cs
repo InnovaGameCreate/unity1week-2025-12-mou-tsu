@@ -40,17 +40,12 @@ public class StickFitJudgeRx : MonoBehaviour
     [SerializeField] private float stoppedTimeTolerance = 0.5f;
     [SerializeField] private float failureJudgmentDelaySeconds = 1f;
 
-    public enum SnapMode
-    {
-        SnapAll,                    // 1. 長さも位置角度も正解にスナップ
-        KeepLengthAlignPose,        // 2. 長さは維持し、位置と角度のみ合わせる
-        KeepLengthAlignYOnly,       // 3. 長さ・X位置・角度は変えず、y座標のみ合わせる
-        FreezeAll                   // 4. 長さ・位置・角度を変えずに停止
-    }
-
-    [Header("クリア後のスナップ設定")]
-    [SerializeField, Tooltip("クリア時のスナップ挙動を選択")]
-    private SnapMode snapMode = SnapMode.SnapAll;
+    [Header("クリア後のスナップ項目 (チェックボックス)")]
+    [SerializeField, Tooltip("標準では全てオン。個別にオフで挙動を保持。")]
+    private bool snapLengthToTarget = true;
+    [SerializeField] private bool alignXPosition = true;
+    [SerializeField] private bool alignYPosition = true;
+    [SerializeField, Tooltip("2DではZ回転を合わせます")] private bool alignRotationAngles = true;
 
     public struct FitProgress
     {
@@ -120,6 +115,8 @@ public class StickFitJudgeRx : MonoBehaviour
             Debug.LogError("target が未設定です。FitTargetSegment2D をアサインしてね。");
             return;
         }
+
+        // チェックボックスはデフォルト値（全てオン）でそのまま使用します
 
         drawer.OnPressUpAsObservable
             .Where(_ => !resolved)
@@ -309,6 +306,8 @@ public class StickFitJudgeRx : MonoBehaviour
             SnapNow();
     }
 
+    // SnapMode は廃止。挙動はチェックボックスで直接制御します。
+
     /// <summary>
     /// クリア判定後、衝突検出に失敗した場合でも強制的に正解位置にスナップする
     /// </summary>
@@ -319,8 +318,9 @@ public class StickFitJudgeRx : MonoBehaviour
 
         snapped = true;
 
-        Vector2 a = target.Start;
-        Vector2 b = target.End;
+        // 現在の正解形（動的更新がある場合は最新のワールド座標）
+        Vector2 a = hasDynamicTarget ? targetStartWorld : target.Start;
+        Vector2 b = hasDynamicTarget ? targetEndWorld : target.End;
 
         SnapToTarget(trackingState.line, trackingState.shadow, trackingState.rb, a, b);
 
@@ -335,8 +335,9 @@ public class StickFitJudgeRx : MonoBehaviour
 
         if (trackingState == null || target == null) return;
 
-        Vector2 a = target.Start;
-        Vector2 b = target.End;
+        // 現在の正解形（動的更新がある場合は最新のワールド座標）
+        Vector2 a = hasDynamicTarget ? targetStartWorld : target.Start;
+        Vector2 b = hasDynamicTarget ? targetEndWorld : target.End;
 
         SnapToTarget(trackingState.line, trackingState.shadow, trackingState.rb, a, b);
 
@@ -427,60 +428,43 @@ public class StickFitJudgeRx : MonoBehaviour
     {
         if (rb == null || line == null) return;
 
+        // 物理を停止
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
         rb.simulated = false;
 
-        Vector2 center = (targetStart + targetEnd) * 0.5f;
-        Vector2 dir = targetEnd - targetStart;
-        float len = dir.magnitude;
-        if (len <= 0.0001f) return;
+        // ターゲット情報
+        Vector2 targetCenter = (targetStart + targetEnd) * 0.5f;
+        Vector2 targetDir = targetEnd - targetStart;
+        float targetLen = targetDir.magnitude;
+        if (targetLen <= 0.0001f) return;
+        float targetAngle = Mathf.Atan2(targetDir.y, targetDir.x) * Mathf.Rad2Deg;
 
-        // 現在の棒長（ワールド）と姿勢を取得
+        // 現在の棒情報（ワールド）
         GetStickWorldEndpoints(line, out Vector2 curStart, out Vector2 curEnd);
         float currentLen = Vector2.Distance(curStart, curEnd);
-        float snapLen = len; // default
+        Vector2 currentCenter = (curStart + curEnd) * 0.5f;
+        Vector2 currentDir = curEnd - curStart;
+        float currentAngle = Mathf.Atan2(currentDir.y, currentDir.x) * Mathf.Rad2Deg;
 
-        float snapAngle;
-        Vector2 snapCenter;
+        // 長さを決定
+        float snapLen = snapLengthToTarget ? targetLen : currentLen;
+        if (snapLen <= 0.0001f) snapLen = targetLen; // フェイルセーフ
 
-        switch (snapMode)
-        {
-            case SnapMode.SnapAll:
-                // 1. 長さも位置角度も正解にスナップ
-                snapLen = len;
-                snapAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                snapCenter = center;
-                break;
+        // 位置（中心）を決定
+        float snapX = alignXPosition ? targetCenter.x : currentCenter.x;
+        float snapY = alignYPosition ? targetCenter.y : currentCenter.y;
+        Vector2 snapCenter = new Vector2(snapX, snapY);
 
-            case SnapMode.KeepLengthAlignPose:
-                // 2. 長さを維持し、位置と角度のみ合わせる
-                snapLen = currentLen;
-                if (snapLen <= 0.0001f) snapLen = len;
-                snapAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                snapCenter = center;
-                break;
+        // 角度を決定（2DではZ回転）
+        float snapAngle = alignRotationAngles ? targetAngle : currentAngle;
 
-            case SnapMode.KeepLengthAlignYOnly:
-                // 3. 長さ・X位置・角度は変えず、y座標のみ合わせる
-                snapLen = currentLen;
-                if (snapLen <= 0.0001f) snapLen = len;
-                snapAngle = Mathf.Atan2((curEnd - curStart).y, (curEnd - curStart).x) * Mathf.Rad2Deg;
-                // X位置は現在のままで、y座標だけ合わせる
-                Vector2 curCenter = (curStart + curEnd) * 0.5f;
-                snapCenter = new Vector2(curCenter.x, center.y);
-                break;
-
-            case SnapMode.FreezeAll:
-            default:
-                // 4. 長さ・位置・角度を変えずに停止（物理だけ停止）
-                return;
-        }
-
+        // 反映
         var t = line.transform;
         t.position = new Vector3(snapCenter.x, snapCenter.y, t.position.z);
         t.rotation = Quaternion.Euler(0f, 0f, snapAngle);
 
+        // 長さ反映（ローカル座標で線分を更新）
         line.useWorldSpace = false;
         line.positionCount = 2;
         line.SetPosition(0, new Vector3(-snapLen * 0.5f, 0f, 0f));
