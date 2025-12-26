@@ -71,7 +71,6 @@ public class StickFitJudgeRx : MonoBehaviour
     // private bool enableFailureJudgment;
 
     // クリアは「通知」と「スナップ完了」は別扱い
-    private bool clearSignaled;
     private bool snapped;
 
     // 外部から判定を一時停止する機能（Stage7の点滅ギミック用）
@@ -136,7 +135,6 @@ public class StickFitJudgeRx : MonoBehaviour
         if (line == null) return;
 
         // 失敗判定は無効化のまま（ゲームオーバーにしない）
-        clearSignaled = false;
         snapped = false;
 
         // Rigidbody2D が付くまで待つ（LineDropOnRelease 側で付与される）
@@ -258,7 +256,6 @@ public class StickFitJudgeRx : MonoBehaviour
         // 非表示期間など、判定一時停止中はクリア通知しない
         if (resolved || judgmentSuspended) return;
         resolved = true;
-        clearSignaled = true;
 
         if (target != null) target.EnableSnapCollider();
 
@@ -277,8 +274,8 @@ public class StickFitJudgeRx : MonoBehaviour
 
         onCleared.OnNext(Unit.Default);
 
-        // スコアアタックモード中ならステージクリアを通知
-        if (ScoreAttackManager.Instance != null && ScoreAttackManager.Instance.IsRunning.Value)
+        // スコアアタックモード中ならステージクリアを通知（ただしリザルト表示後は進めない）
+        if (ScoreAttackManager.Instance != null && ScoreAttackManager.Instance.IsRunning.Value && !ScoreAttackManager.Instance.IsResultShown)
         {
             ScoreAttackManager.Instance.OnStageCleared();
         }
