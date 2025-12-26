@@ -1341,7 +1341,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   judge: {fileID: 430045647}
-  nextSceneName: Title
+  nextSceneName: Stage10
   persistRoot: {fileID: 1791296829}
   cutInRect: {fileID: 1006219129}
   waitSeconds: 2.5
@@ -1601,6 +1601,7 @@ MonoBehaviour:
   targetSegment: {fileID: 430045646}
   startPointMarker: {fileID: 1035062001}
   dottedLine: {fileID: 1035062002}
+  useManualPosition: 0
   verticalOffset: 0.15
   showGuide: 0
   markerRadius: 1
@@ -1662,9 +1663,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
-    width: 1
-    height: 1
+    y: 0.37592593
+    width: 0.4947917
+    height: 0.49479166
   near clip plane: 0.3
   far clip plane: 10
   field of view: 60

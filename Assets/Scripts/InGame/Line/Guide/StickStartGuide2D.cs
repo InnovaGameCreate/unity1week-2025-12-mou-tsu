@@ -18,7 +18,11 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
     [SerializeField] private LineRenderer dottedLine;
 
     [Header("配置設定")]
-    [SerializeField] private float verticalOffset = 2.0f;
+    [SerializeField, Tooltip("オフ：正解の形の上に自動配置（標準）。オン：エディタで配置した赤丸の位置をそのまま使用")]
+    private bool useManualPosition = false;
+    
+    [SerializeField, Tooltip("自動配置時：正解位置からどれだけ上にずらすか")]
+    private float verticalOffset = 2.0f;
 
     [Header("ガイド表示設定")]
     [SerializeField, Tooltip("ガイド（赤丸と点線）を表示するか")]
@@ -69,15 +73,22 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
 
     private void SetupMarkerPosition()
     {
-        Vector2 start = targetSegment.Start;
-
-        markerCenterWorld = new Vector3(
-            start.x,
-            start.y + verticalOffset,
-            startPointMarker.transform.position.z
-        );
-
-        startPointMarker.transform.position = markerCenterWorld;
+        if (useManualPosition)
+        {
+            // 手動位置を使用：エディタで配置済みの現在位置をそのまま使う
+            markerCenterWorld = startPointMarker.transform.position;
+        }
+        else
+        {
+            // 自動配置：正解の形の上
+            Vector2 start = targetSegment.Start;
+            markerCenterWorld = new Vector3(
+                start.x,
+                start.y + verticalOffset,
+                startPointMarker.transform.position.z
+            );
+            startPointMarker.transform.position = markerCenterWorld;
+        }
     }
 
     private void UpdateMarkerRadiusFromSprite()
