@@ -63,6 +63,7 @@
     <Compile Include="Assets\Scripts\InGame\Line\LineDropOnRelease.cs" />
     <Compile Include="Assets\Scripts\InGame\StageManagement\ReloadSceneButton.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\Scripts\Score\ExitFullScreenButton.cs" />
     <Compile Include="Assets\Scripts\Score\ScoreAttackResultPanel.cs" />
     <Compile Include="Assets\Scripts\Title\StartButton.cs" />
     <Compile Include="Assets\Scripts\InGame\Animation\CountdownPresenter.cs" />
