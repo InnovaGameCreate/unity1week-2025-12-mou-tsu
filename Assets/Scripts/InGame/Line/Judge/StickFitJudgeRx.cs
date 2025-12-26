@@ -293,6 +293,12 @@ public class StickFitJudgeRx : MonoBehaviour
         });
 
         onCleared.OnNext(Unit.Default);
+
+        // スコアアタックモード中ならステージクリアを通知
+        if (ScoreAttackManager.Instance != null && ScoreAttackManager.Instance.IsRunning.Value)
+        {
+            ScoreAttackManager.Instance.OnStageCleared();
+        }
     }
 
     private void TrySnapIfTouching()
@@ -348,6 +354,13 @@ public class StickFitJudgeRx : MonoBehaviour
     private void OnFailed()
     {
         if (resolved) return;
+        // スコアアタック終了後など、マネージャーが停止している場合はリスタートしない
+        if (ScoreAttackManager.Instance != null && !ScoreAttackManager.Instance.IsRunning.Value)
+        {
+            resolved = true;
+            return;
+        }
+
         resolved = true;
 
         if (trackingState?.line != null)

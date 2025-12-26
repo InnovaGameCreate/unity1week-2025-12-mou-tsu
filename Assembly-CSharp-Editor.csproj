@@ -1187,6 +1187,10 @@
       <HintPath>Library\ScriptAssemblies\UniTask.Linq.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="unityroom">
+      <HintPath>Library\ScriptAssemblies\unityroom.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Mathematics.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Mathematics.Editor.dll</HintPath>
       <Private>False</Private>

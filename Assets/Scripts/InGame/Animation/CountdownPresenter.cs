@@ -26,7 +26,7 @@ public class CountdownPresenter : MonoBehaviour
 
     // ✅ カウントダウン終了を流すObservable
     public IObservable<Unit> OnCountdownFinished => onCountdownFinished;
-    private readonly Subject<Unit> onCountdownFinished = new Subject<Unit>();
+    private readonly ReplaySubject<Unit> onCountdownFinished = new ReplaySubject<Unit>(1);
 
     private Sequence seq;
 
@@ -37,6 +37,32 @@ public class CountdownPresenter : MonoBehaviour
 
     private void Start()
     {
+        // ScoreAttackManager が存在し、かつ IsRunning が true の場合のみスキップ
+        // WebGL では初期化順序の違いで誤判定する可能性があるため、慎重にチェック
+        var manager = ScoreAttackManager.Instance;
+        bool isScoreAttack = manager != null && manager.IsRunning != null && manager.IsRunning.Value;
+
+        Debug.Log($"[Countdown] Start - manager: {manager != null}, isRunning: {(manager != null ? manager.IsRunning.Value.ToString() : "N/A")}, isScoreAttack: {isScoreAttack}");
+
+        if (isScoreAttack)
+        {
+            if (manager.HasPlayedCountdown)
+            {
+                // 2回目以降（またはリトライなど既に再生済みの判定）はスキップ
+                Debug.Log("[Countdown] スコアアタック(再生済み)のためカウントダウンをスキップ");
+                onCountdownFinished.OnNext(Unit.Default);
+                return;
+            }
+            else
+            {
+                // 初回のみ再生し、フラグを立てる
+                Debug.Log("[Countdown] スコアアタック(初回)のためカウントダウン再生");
+                manager.HasPlayedCountdown = true;
+                // このまま下のPlayCountdown処理へ進む
+            }
+        }
+
+        Debug.Log("[Countdown] 通常モード - カウントダウン開始を待機");
         inGameManager.OnStageStartImmediate
             .Delay(TimeSpan.FromSeconds(0.5f))
             .Take(1)

@@ -72,6 +72,8 @@ public class DrawLineFromClick : MonoBehaviour
             return;
         }
 
+        bool isScoreAttack = ScoreAttackManager.Instance != null && ScoreAttackManager.Instance.IsRunning.Value;
+
         canInput = false;
 
         // 開始位置上書きの参照を解決
