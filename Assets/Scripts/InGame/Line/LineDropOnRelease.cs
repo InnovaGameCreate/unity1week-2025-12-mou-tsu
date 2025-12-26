@@ -13,7 +13,8 @@ public class LineDropOnRelease : MonoBehaviour
 
     [Header("当たり判定（白だけに付ける）")]
     [SerializeField] private bool addCollider = true;
-    [SerializeField] private float colliderThickness = 0.15f;
+    [SerializeField, Tooltip("コライダーのY軸方向のサイズ（厚み）")] 
+    private float colliderThickness = 0.24f;
 
     [Header("バウンド用マテリアル（任意）")]
     [SerializeField] private PhysicsMaterial2D bounceMaterial;
@@ -64,8 +65,7 @@ public class LineDropOnRelease : MonoBehaviour
         var parent = lineParentOverride != null ? lineParentOverride : null; // スケール汚染防止のためワールド直下がデフォルト
         t.SetParent(parent, true);
         t.position = mid;
-        t.rotation = Quaternion.Euler(0f, 0f, angleDeg);
-
+        t.rotation = Quaternion.Euler(0f, 0f, angleDeg);        t.localScale = Vector3.one; // スケールをリセット
         // 本体ラインをローカル化（物理に強い）
         main.useWorldSpace = false;
         main.positionCount = 2;
