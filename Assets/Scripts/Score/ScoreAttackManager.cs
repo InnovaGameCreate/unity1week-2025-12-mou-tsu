@@ -17,6 +17,7 @@ public class ScoreAttackManager : MonoBehaviour
     public IReadOnlyReactiveProperty<int> ClearedCount => _clearedCount;
     public IReadOnlyReactiveProperty<bool> IsRunning => _isRunning;
     public bool HasPlayedCountdown { get; set; }
+    public bool IsResultShown => _resultShown;
 
     private readonly ReactiveProperty<int> _remainingSeconds = new ReactiveProperty<int>(0);
     private readonly ReactiveProperty<int> _clearedCount = new ReactiveProperty<int>(0);
