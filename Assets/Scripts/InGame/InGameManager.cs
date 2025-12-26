@@ -6,10 +6,10 @@ using UniRx.Triggers;
 public class InGameManager : MonoBehaviour
 {
     /// <summary>
-    /// このステージ開始「直後」を流す（Startのタイミングで1回）
+    /// このステージ開始「直後」を流す（Startのタイミングで1回）。ReplaySubject にして、後から Subscribe されても受け取れるようにする。
     /// </summary>
     public IObservable<Unit> OnStageStartImmediate => onStageStartImmediate;
-    private readonly Subject<Unit> onStageStartImmediate = new Subject<Unit>();
+    private readonly ReplaySubject<Unit> onStageStartImmediate = new ReplaySubject<Unit>(1);
 
     /// <summary>
     /// このステージ開始「3秒後」を流す（1回）
