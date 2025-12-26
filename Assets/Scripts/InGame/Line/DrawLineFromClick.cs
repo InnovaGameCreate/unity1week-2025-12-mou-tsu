@@ -36,6 +36,13 @@ public class DrawLineFromClick : MonoBehaviour
     [Header("生成ラインのタグ設定")]
     [SerializeField, Tooltip("生成したLineRendererに自動で付与するタグ。空なら何もしない")] private string lineTag = "";
 
+    [Header("DrawSystem ファクトリ")]
+    [SerializeField, Tooltip("2本目以降のDrawSystem生成を委譲するファクトリ。未設定なら委譲せず現在のインスタンスで描画する。")]
+    private DrawLineSystemFactory drawSystemFactory;
+
+    [SerializeField, Tooltip("true の場合、2回目以降はファクトリ経由で新しいDrawSystemを生成する" )]
+    private bool instantiatePerDraw = true;
+
     private LineRenderer currentLine;
     private LineRenderer currentShadowLine;
 
@@ -49,6 +56,7 @@ public class DrawLineFromClick : MonoBehaviour
     private bool canInput;
     private bool hasForcedStart;
     private Vector3 forcedStartPos;
+    private bool isDelegatedInstance; // プレハブから生成されて BeginDrawAt で開始されたインスタンス
 
     private readonly Subject<Vector3> onPressDown = new Subject<Vector3>();
     private readonly Subject<(LineRenderer line, LineRenderer shadow, Vector3 start, Vector3 end, Vector3 shadowOffsetWorld)>
@@ -74,8 +82,6 @@ public class DrawLineFromClick : MonoBehaviour
 
         bool isScoreAttack = ScoreAttackManager.Instance != null && ScoreAttackManager.Instance.IsRunning.Value;
 
-        canInput = false;
-
         // 開始位置上書きの参照を解決
         if (startPointOverrideSource != null)
         {
@@ -86,10 +92,19 @@ public class DrawLineFromClick : MonoBehaviour
             }
         }
 
-        countdownPresenter.OnCountdownFinished
-            .Take(1)
-            .Subscribe(_ => canInput = true)
-            .AddTo(this);
+        // 委譲されたインスタンスは既に描画中なのでカウントダウン待ちをスキップ
+        if (isDelegatedInstance)
+        {
+            canInput = true;
+        }
+        else
+        {
+            canInput = false;
+            countdownPresenter.OnCountdownFinished
+                .Take(1)
+                .Subscribe(_ => canInput = true)
+                .AddTo(this);
+        }
 
         var pointerStream = this.UpdateAsObservable()
             .Select(_ => Pointer.current)
@@ -97,7 +112,7 @@ public class DrawLineFromClick : MonoBehaviour
 
         var pressDown = pointerStream
             .Where(_ => canInput)
-            .Where(_ => !hasDrawnOnce)
+            // .Where(_ => !hasDrawnOnce) // 何度でも描けるように変更（失敗判定を緩和）
             .Where(p => p.press.wasPressedThisFrame)
             .Select(p => GetPointerWorldPos(p))
             .Share();
@@ -120,65 +135,25 @@ public class DrawLineFromClick : MonoBehaviour
             })
             .Subscribe(pos =>
             {
+                // 既に1本描いていて、かつファクトリが設定されている場合は新しい DrawSystem を生成して委譲
+                if (instantiatePerDraw && hasDrawnOnce && drawSystemFactory != null)
+                {
+                    var newDrawer = drawSystemFactory.CreateDrawer(pos, this);
+                    if (newDrawer != null)
+                    {
+                        // 現在のインスタンスは以降の入力を受け付けず、描画も止める
+                        canInput = false;
+                        isDrawing = false;
+                        return;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("DrawLineSystemFactory から DrawLineFromClick を取得できませんでした。フォールバックで現在のインスタンスで描画します。");
+                    }
+                }
+
+                BeginDrawAt(pos);
                 hasDrawnOnce = true;
-                isDrawing = true;
-
-                // 赤丸内で押された場合は中心に開始点を固定
-                if (startPointOverride != null && startPointOverride.TryOverrideStartPoint(pos, out var overrideStart))
-                {
-                    hasForcedStart = true;
-                    forcedStartPos = overrideStart;
-                }
-
-                if (hasForcedStart)
-                {
-                    startPos = forcedStartPos;
-                    hasForcedStart = false;
-                }
-                else
-                {
-                    startPos = pos;
-                }
-
-                currentEndPos = startPos;
-
-                currentLength = 0f;
-                lastDir = ((Vector3)defaultDirection).sqrMagnitude > 0.0001f ? ((Vector3)defaultDirection).normalized : Vector3.right;
-
-                currentLine = Instantiate(linePrefab, transform);
-                currentLine.name = "Line";
-                currentLine.useWorldSpace = true;
-                currentLine.positionCount = 2;
-                currentLine.SetPosition(0, startPos);
-                currentLine.SetPosition(1, currentEndPos);
-                currentLine.sortingLayerName = sortingLayerName;
-                currentLine.sortingOrder = mainSortingOrder;
-                ApplyTagIfNeeded(currentLine);
-
-                currentShadowLine = null;
-                if (useShadow)
-                {
-                    currentShadowLine = Instantiate(linePrefab, transform);
-                    currentShadowLine.name = "Line_Shadow";
-                    currentShadowLine.useWorldSpace = true;
-                    currentShadowLine.positionCount = 2;
-
-                    currentShadowLine.startColor = shadowColor;
-                    currentShadowLine.endColor = shadowColor;
-
-                    currentShadowLine.startWidth = currentLine.startWidth * shadowWidthMultiplier;
-                    currentShadowLine.endWidth = currentLine.endWidth * shadowWidthMultiplier;
-
-                    currentShadowLine.sortingLayerName = sortingLayerName;
-                    currentShadowLine.sortingOrder = mainSortingOrder - 1;
-
-                    currentShadowLine.SetPosition(0, startPos + shadowOffsetWorld);
-                    currentShadowLine.SetPosition(1, currentEndPos + shadowOffsetWorld);
-
-                    ApplyTagIfNeeded(currentShadowLine);
-                }
-
-                onPressDown.OnNext(startPos);
             })
             .AddTo(this);
 
@@ -227,6 +202,81 @@ public class DrawLineFromClick : MonoBehaviour
             .AddTo(this);
     }
 
+    /// <summary>
+    /// 開始処理を共通化して外部から呼べるようにする（プレハブから委譲される際に使用）
+    /// </summary>
+    public void BeginDrawAt(Vector3 pos)
+    {
+        // isDrawing はインスタンスで管理
+        isDrawing = true;
+
+        // 赤丸内で押された場合は中心に開始点を固定
+        if (startPointOverride != null && startPointOverride.TryOverrideStartPoint(pos, out var overrideStart))
+        {
+            hasForcedStart = true;
+            forcedStartPos = overrideStart;
+        }
+
+        if (hasForcedStart)
+        {
+            startPos = forcedStartPos;
+            hasForcedStart = false;
+        }
+        else
+        {
+            startPos = pos;
+        }
+
+        currentEndPos = startPos;
+
+        currentLength = 0f;
+        lastDir = ((Vector3)defaultDirection).sqrMagnitude > 0.0001f ? ((Vector3)defaultDirection).normalized : Vector3.right;
+
+        currentLine = Instantiate(linePrefab, transform);
+
+        // 再帰的なスクリプト増殖バグ防止（Prefabにこのスクリプトが付いている場合）
+        var component = currentLine.GetComponent<DrawLineFromClick>();
+        if (component != null) Destroy(component);
+
+        currentLine.name = "Line";
+        currentLine.useWorldSpace = true;
+        currentLine.positionCount = 2;
+        currentLine.SetPosition(0, startPos);
+        currentLine.SetPosition(1, currentEndPos);
+        currentLine.sortingLayerName = sortingLayerName;
+        currentLine.sortingOrder = mainSortingOrder;
+        ApplyTagIfNeeded(currentLine);
+
+        currentShadowLine = null;
+        if (useShadow)
+        {
+            currentShadowLine = Instantiate(linePrefab, transform);
+
+            var shadowComponent = currentShadowLine.GetComponent<DrawLineFromClick>();
+            if (shadowComponent != null) Destroy(shadowComponent);
+
+            currentShadowLine.name = "Line_Shadow";
+            currentShadowLine.useWorldSpace = true;
+            currentShadowLine.positionCount = 2;
+
+            currentShadowLine.startColor = shadowColor;
+            currentShadowLine.endColor = shadowColor;
+
+            currentShadowLine.startWidth = currentLine.startWidth * shadowWidthMultiplier;
+            currentShadowLine.endWidth = currentLine.endWidth * shadowWidthMultiplier;
+
+            currentShadowLine.sortingLayerName = sortingLayerName;
+            currentShadowLine.sortingOrder = mainSortingOrder - 1;
+
+            currentShadowLine.SetPosition(0, startPos + shadowOffsetWorld);
+            currentShadowLine.SetPosition(1, currentEndPos + shadowOffsetWorld);
+
+            ApplyTagIfNeeded(currentShadowLine);
+        }
+
+        onPressDown.OnNext(startPos);
+    }
+
     private Vector3 GetPointerWorldPos(Pointer p)
     {
         Vector2 screen = p.position.ReadValue();
@@ -247,6 +297,28 @@ public class DrawLineFromClick : MonoBehaviour
         worldPos.z = 0f;
         hasForcedStart = true;
         forcedStartPos = worldPos;
+    }
+
+    /// <summary>
+    /// プレハブから生成した際に、足りない参照を既存インスタンスから補完する
+    /// </summary>
+    public void CopyMissingReferencesFrom(DrawLineFromClick source)
+    {
+        if (source == null) return;
+
+        if (linePrefab == null) linePrefab = source.linePrefab;
+        if (countdownPresenter == null) countdownPresenter = source.countdownPresenter;
+        if (startPointOverrideSource == null) startPointOverrideSource = source.startPointOverrideSource;
+        if (drawSystemFactory == null) drawSystemFactory = source.drawSystemFactory;
+
+        // startPointOverride を再解決
+        if (startPointOverride == null && startPointOverrideSource != null)
+        {
+            startPointOverride = startPointOverrideSource as IStartPointOverride2D;
+        }
+
+        // このインスタンスは委譲されたものとしてマーク
+        isDelegatedInstance = true;
     }
 
     private void ApplyTagIfNeeded(LineRenderer lr)

@@ -51,6 +51,7 @@
     <Compile Include="Assets\Scripts\InGame\Line\DrawLineFromClick.cs" />
     <Compile Include="Assets\Scripts\Title\ModeMenuUp.cs" />
     <Compile Include="Assets\Scripts\InGame\Gimmick\TsuMover.cs" />
+    <Compile Include="Assets\Scripts\InGame\Line\DrawLineSystemFactory.cs" />
     <Compile Include="Assets\Scripts\AudioManager.cs" />
     <Compile Include="Assets\Scripts\InGame\Gimmick\Blink\BlinkingClearGateRx.cs" />
     <Compile Include="Assets\Scripts\Title\ScoreAttackButton.cs" />
