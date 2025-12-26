@@ -28,17 +28,17 @@ public class StickFitJudgeRx : MonoBehaviour
     [SerializeField, Range(0f, 30f)] private float angleToleranceDeg = 6f;
     [SerializeField] private float perpendicularToleranceMultiplier = 1.0f;
 
-    [Header("失敗時：自動リスタート")]
-    [SerializeField] private bool restartOnFail = true;
-    [SerializeField] private float restartDelaySeconds = 0.5f;
+    // [Header("失敗時：自動リスタート")]
+    // [SerializeField] private bool restartOnFail = true;
+    // [SerializeField] private float restartDelaySeconds = 0.5f;
 
     [Header("失敗判定（画面外に落ちた場合）")]
     [SerializeField] private float failYThreshold = -10f;
 
-    [Header("失敗判定（棒が停止した場合）")]
-    [SerializeField] private float stoppedVelocityThreshold = 0.1f;
-    [SerializeField] private float stoppedTimeTolerance = 0.5f;
-    [SerializeField] private float failureJudgmentDelaySeconds = 1f;
+    // [Header("失敗判定（棒が停止した場合）")]
+    // [SerializeField] private float stoppedVelocityThreshold = 0.1f;
+    // [SerializeField] private float stoppedTimeTolerance = 0.5f;
+    // [SerializeField] private float failureJudgmentDelaySeconds = 1f;
 
     [Header("クリア後のスナップ項目 (チェックボックス)")]
     [SerializeField, Tooltip("標準では全てオン。個別にオフで挙動を保持。")]
@@ -68,7 +68,7 @@ public class StickFitJudgeRx : MonoBehaviour
     public IObservable<Unit> OnFailedAsObservable => onFailed;
 
     private bool resolved;
-    private bool enableFailureJudgment;
+    // private bool enableFailureJudgment;
 
     // クリアは「通知」と「スナップ完了」は別扱い
     private bool clearSignaled;
@@ -101,7 +101,8 @@ public class StickFitJudgeRx : MonoBehaviour
         public float stoppedTime;
     }
 
-    private TrackingState trackingState;
+    // private TrackingState trackingState; // 廃止
+    private readonly System.Collections.Generic.List<TrackingState> trackingStates = new System.Collections.Generic.List<TrackingState>();
 
     void Start()
     {
@@ -122,13 +123,19 @@ public class StickFitJudgeRx : MonoBehaviour
             .Where(_ => !resolved)
             .Subscribe(x => StartTracking(x.line, x.shadow))
             .AddTo(this);
+            
+        // 判定ループ（解決するまで回す）
+        Observable.EveryFixedUpdate()
+            .Where(_ => !resolved)
+            .Subscribe(_ => TickJudge())
+            .AddTo(this);
     }
 
     private void StartTracking(LineRenderer line, LineRenderer shadow)
     {
         if (line == null) return;
 
-        enableFailureJudgment = false;
+        // 失敗判定は無効化のまま（ゲームオーバーにしない）
         clearSignaled = false;
         snapped = false;
 
@@ -139,7 +146,7 @@ public class StickFitJudgeRx : MonoBehaviour
             .Take(1)
             .Subscribe(rb =>
             {
-                trackingState = new TrackingState
+                var state = new TrackingState
                 {
                     line = line,
                     shadow = shadow,
@@ -150,119 +157,95 @@ public class StickFitJudgeRx : MonoBehaviour
                     stoppedTime = 0f
                 };
 
-                // 判定ループ（未解決の間だけ）
-                Observable.EveryFixedUpdate()
-                    .Where(_ => !resolved && trackingState != null)
-                    .Subscribe(_ => TickJudge())
-                    .AddTo(this);
-
-                // 画面外で失敗
-                Observable.EveryFixedUpdate()
-                    .Where(_ => !resolved && trackingState?.line != null)
-                    .Where(_ => trackingState.line.transform.position.y < failYThreshold)
-                    .Take(1)
-                    .Subscribe(_ => OnFailed())
-                    .AddTo(this);
-
-                // 失敗判定開始
-                Observable.Timer(TimeSpan.FromSeconds(failureJudgmentDelaySeconds))
-                    .Where(_ => !resolved && trackingState != null)
-                    .Subscribe(_ => enableFailureJudgment = true)
-                    .AddTo(this);
-
-                // ✅ クリア後、SnapColliderに触れたらピタッと停止＆スナップ
-                line.OnCollisionEnter2DAsObservable()
-                    .Where(_ => clearSignaled && !snapped)
-                    .Where(c => target != null && target.SnapCollider != null && c.collider == target.SnapCollider)
-                    .Take(1)
-                    .Subscribe(_ => SnapNow())
-                    .AddTo(this);
-
-                // 取りこぼし保険（Enableした瞬間に重なってた等）
-                Observable.EveryFixedUpdate()
-                    .Where(_ => clearSignaled && !snapped)
-                    .Subscribe(_ => TrySnapIfTouching())
-                    .AddTo(this);
-
-                // ✅ クリア後に一定時間経っても停止しない場合は強制スナップ（フェイルセーフ）
-                Observable.Timer(TimeSpan.FromSeconds(0.5f))
-                    .Where(_ => clearSignaled && !snapped)
-                    .Take(1)
-                    .Subscribe(_ => ForceSnapOnClear())
-                    .AddTo(this);
+                trackingStates.Add(state);
             })
             .AddTo(this);
     }
 
     private void TickJudge()
     {
-        if (resolved || trackingState == null) return;
+        if (resolved) return;
         if (target == null || !target.IsValid) return;
         if (judgmentSuspended) return; // 判定が一時停止中はスキップ
 
         if (!target.gameObject.activeInHierarchy)
         {
-            OnFailed();
+            // ターゲット不在なら判定不能だが、Failはしない
             return;
         }
-
-        var state = trackingState;
-        if (state.line == null || state.rb == null) return;
-
-        // 棒の端点（ワールド）
-        GetStickWorldEndpoints(state.line, out Vector2 stickStart, out Vector2 stickEnd);
 
         Vector2 targetStart = hasDynamicTarget ? targetStartWorld : target.Start;
         Vector2 targetEnd = hasDynamicTarget ? targetEndWorld : target.End;
-
-        float stickLen = Vector2.Distance(stickStart, stickEnd);
         float targetLen = Vector2.Distance(targetStart, targetEnd);
-
-        if (stickLen <= 0.0001f || targetLen <= 0.0001f)
+        
+        // 全てのスティックを走査
+        // 逆順ループ（削除対応のため）
+        for (int i = trackingStates.Count - 1; i >= 0; i--)
         {
-            state.lengthOk = false;
-            return;
-        }
+            var state = trackingStates[i];
+            
+            // 削除済み or 破壊済みならリストから除外
+            if (state.line == null || state.rb == null)
+            {
+                trackingStates.RemoveAt(i);
+                continue;
+            }
 
-        // 長さ許容（±5%）
-        float ratio = stickLen / targetLen;
-        float minRatio = 1f - lengthTolerancePercent;
-        float maxRatio = 1f + lengthTolerancePercent;
-        state.lengthOk = (ratio >= minRatio && ratio <= maxRatio);
+            // 画面外落下判定（失敗ではなく、単に追跡終了）
+            if (state.line.transform.position.y < failYThreshold)
+            {
+                trackingStates.RemoveAt(i);
+                // 失敗UIなどは出さない
+                continue;
+            }
 
-        // ハマリ率：線分の重なり率（長さOKの瞬間だけ max を更新）
-        float fitRate = state.lengthOk ? CalcOverlapRate(stickStart, stickEnd, targetStart, targetEnd) : 0f;
-        if (fitRate > state.maxRate) state.maxRate = fitRate;
+            // 棒の端点（ワールド）
+            GetStickWorldEndpoints(state.line, out Vector2 stickStart, out Vector2 stickEnd);
+            float stickLen = Vector2.Distance(stickStart, stickEnd);
 
-        onProgress.OnNext(new FitProgress
-        {
-            line = state.line,
-            currentRate = fitRate,
-            maxRate = state.maxRate,
-            currentPercent = ToPercent(fitRate),
-            maxPercent = ToPercent(state.maxRate),
-            lengthOk = state.lengthOk,
-            cleared = false,
-            failed = false
-        });
+            if (stickLen <= 0.0001f || targetLen <= 0.0001f)
+            {
+                state.lengthOk = false;
+                continue;
+            }
 
-        // ✅ クリア条件：長さOK かつ maxRate >= 0.95（±5%）
-        float clearThreshold = 1f - lengthTolerancePercent;
-        if (state.lengthOk && state.maxRate >= clearThreshold)
-        {
-            SignalClear();
-            return;
-        }
+            // 長さ許容（±5%）
+            float ratio = stickLen / targetLen;
+            float minRatio = 1f - lengthTolerancePercent;
+            float maxRatio = 1f + lengthTolerancePercent;
+            state.lengthOk = (ratio >= minRatio && ratio <= maxRatio);
 
-        // 失敗条件：停止
-        if (enableFailureJudgment)
-        {
-            float v = state.rb.linearVelocity.magnitude;
-            if (v < stoppedVelocityThreshold) state.stoppedTime += Time.fixedDeltaTime;
-            else state.stoppedTime = 0f;
+            // ハマリ率：線分の重なり率（長さOKの瞬間だけ max を更新）
+            float fitRate = state.lengthOk ? CalcOverlapRate(stickStart, stickEnd, targetStart, targetEnd) : 0f;
+            if (fitRate > state.maxRate) state.maxRate = fitRate;
+            
+            // UI通知（最新の操作対象、もしくは一番いいスコアのやつなどを送るのが理想だが、
+            // ここではとりあえず「最後に投げたやつ」または「クリア条件満たしたやつ」を優先したい）
+            // 簡易的に「更新があったら」送るが、複数あるとUIがチラつく。
+            // いったん「最新（リスト末尾）」の状態を送るようにしてみる。
+            bool isLatest = (i == trackingStates.Count - 1);
+            if (isLatest)
+            {
+                onProgress.OnNext(new FitProgress
+                {
+                    line = state.line,
+                    currentRate = fitRate,
+                    maxRate = state.maxRate,
+                    currentPercent = ToPercent(fitRate),
+                    maxPercent = ToPercent(state.maxRate),
+                    lengthOk = state.lengthOk,
+                    cleared = false,
+                    failed = false
+                });
+            }
 
-            if (state.stoppedTime >= stoppedTimeTolerance)
-                OnFailed();
+            // ✅ クリア条件：長さOK かつ maxRate >= 0.95（±5%）
+            float clearThreshold = 1f - lengthTolerancePercent;
+            if (state.lengthOk && state.maxRate >= clearThreshold)
+            {
+                SignalClear(state);
+                return;
+            }
         }
     }
 
@@ -270,7 +253,7 @@ public class StickFitJudgeRx : MonoBehaviour
     /// クリアを「通知」する（この瞬間に CLEAR! にしたい）
     /// その後、SnapCollider を有効化して接触したら停止＆スナップ。
     /// </summary>
-    private void SignalClear()
+    private void SignalClear(TrackingState winningState)
     {
         // 非表示期間など、判定一時停止中はクリア通知しない
         if (resolved || judgmentSuspended) return;
@@ -282,7 +265,7 @@ public class StickFitJudgeRx : MonoBehaviour
         // Presenter 側は cleared=true を受けて CLEAR! 表示に切り替える
         onProgress.OnNext(new FitProgress
         {
-            line = trackingState != null ? trackingState.line : null,
+            line = winningState.line,
             currentRate = 1f,
             maxRate = 1f,
             currentPercent = 100,
@@ -299,53 +282,23 @@ public class StickFitJudgeRx : MonoBehaviour
         {
             ScoreAttackManager.Instance.OnStageCleared();
         }
+        
+        // クリア条件を満たした瞬間に即スナップする（衝突待ちは不安定なため）
+        SnapNow(winningState);
     }
 
-    private void TrySnapIfTouching()
+    private void SnapNow(TrackingState state)
     {
         if (snapped) return;
-        if (trackingState == null) return;
-        if (target == null || target.SnapCollider == null) return;
-        if (!target.SnapCollider.enabled) return;
-
-        if (trackingState.col != null && trackingState.col.IsTouching(target.SnapCollider))
-            SnapNow();
-    }
-
-    // SnapMode は廃止。挙動はチェックボックスで直接制御します。
-
-    /// <summary>
-    /// クリア判定後、衝突検出に失敗した場合でも強制的に正解位置にスナップする
-    /// </summary>
-    private void ForceSnapOnClear()
-    {
-        if (snapped) return;
-        if (trackingState == null || target == null) return;
-
         snapped = true;
+
+        if (state == null || state.line == null || target == null) return;
 
         // 現在の正解形（動的更新がある場合は最新のワールド座標）
         Vector2 a = hasDynamicTarget ? targetStartWorld : target.Start;
         Vector2 b = hasDynamicTarget ? targetEndWorld : target.End;
 
-        SnapToTarget(trackingState.line, trackingState.shadow, trackingState.rb, a, b);
-
-        if (target.SnapCollider != null)
-            target.DisableSnapCollider();
-    }
-
-    private void SnapNow()
-    {
-        if (snapped) return;
-        snapped = true;
-
-        if (trackingState == null || target == null) return;
-
-        // 現在の正解形（動的更新がある場合は最新のワールド座標）
-        Vector2 a = hasDynamicTarget ? targetStartWorld : target.Start;
-        Vector2 b = hasDynamicTarget ? targetEndWorld : target.End;
-
-        SnapToTarget(trackingState.line, trackingState.shadow, trackingState.rb, a, b);
+        SnapToTarget(state.line, state.shadow, state.rb, a, b);
 
         // もう役目は終わり：当たり判定は消して通過しないようにする
         target.DisableSnapCollider();
@@ -353,40 +306,12 @@ public class StickFitJudgeRx : MonoBehaviour
 
     private void OnFailed()
     {
-        if (resolved) return;
-        // スコアアタック終了後など、マネージャーが停止している場合はリスタートしない
-        if (ScoreAttackManager.Instance != null && !ScoreAttackManager.Instance.IsRunning.Value)
-        {
-            resolved = true;
-            return;
-        }
-
-        resolved = true;
-
-        if (trackingState?.line != null)
-        {
-            onProgress.OnNext(new FitProgress
-            {
-                line = trackingState.line,
-                currentRate = 0f,
-                maxRate = 0f,
-                currentPercent = 0,
-                maxPercent = 0,
-                lengthOk = false,
-                cleared = false,
-                failed = true
-            });
-        }
-
-        onFailed.OnNext(Unit.Default);
-
-        if (restartOnFail)
-        {
-            Observable.Timer(TimeSpan.FromSeconds(restartDelaySeconds))
-                .Take(1)
-                .Subscribe(_ => ReloadScene())
-                .AddTo(this);
-        }
+        // 廃止されました（失敗判定なし）
+        // if (resolved) return;
+        // resolved = true;
+        // onFailed.OnNext(Unit.Default);
+        
+        // 旧処理: 一番最後のスティックでも取ってFAIL通知していたが、今は何もしない。
     }
 
     /// <summary>

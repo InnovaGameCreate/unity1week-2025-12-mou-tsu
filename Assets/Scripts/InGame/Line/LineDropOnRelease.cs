@@ -4,6 +4,7 @@ using UniRx;
 public class LineDropOnRelease : MonoBehaviour
 {
     [SerializeField] private DrawLineFromClick drawer;
+    [SerializeField, Tooltip("生成済みラインをぶら下げる親。未設定ならワールド直下に置く")] private Transform lineParentOverride;
 
     [Header("物理設定（白だけに適用）")]
     [SerializeField] private float gravityScale = 2.5f;
@@ -19,9 +20,22 @@ public class LineDropOnRelease : MonoBehaviour
 
     void Start()
     {
+        // 1) 自分と同じオブジェクトに付いている Drawer を優先
+        if (drawer == null)
+            drawer = GetComponent<DrawLineFromClick>();
+
+        // 2) 子階層にある場合（同じプレハブ内での相互参照崩れ対策）
+        if (drawer == null)
+            drawer = GetComponentInChildren<DrawLineFromClick>(true);
+
+        // 3) 親階層にある場合（Prefab構造に依存）
+        if (drawer == null)
+            drawer = GetComponentInParent<DrawLineFromClick>(true);
+
+        // グローバル検索は行わない（別インスタンスを拾って既存ラインに影響を与えないため）
         if (drawer == null)
         {
-            Debug.LogError("drawer が未設定です。DrawLineFromClick をアサインしてね。");
+            Debug.LogError("drawer が未設定です。DrawLineFromClick を同一プレハブ内でアサインしてください。");
             return;
         }
 
@@ -47,10 +61,10 @@ public class LineDropOnRelease : MonoBehaviour
 
         // 本体（白）のTransformを“物理オブジェクト”として使う
         var t = main.transform;
-        t.SetParent(drawer.transform, true);
+        var parent = lineParentOverride != null ? lineParentOverride : null; // スケール汚染防止のためワールド直下がデフォルト
+        t.SetParent(parent, true);
         t.position = mid;
         t.rotation = Quaternion.Euler(0f, 0f, angleDeg);
-        t.localScale = Vector3.one;
 
         // 本体ラインをローカル化（物理に強い）
         main.useWorldSpace = false;
