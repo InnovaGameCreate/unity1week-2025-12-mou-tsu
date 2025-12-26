@@ -28,6 +28,13 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
     [SerializeField, Tooltip("赤丸SpriteRendererの見た目から自動計算されます（手入力不要）")]
     private float markerRadius = 0.3f;
 
+    [Header("クリック判定設定")]
+    [SerializeField, Tooltip("クリック判定を自動（赤丸の見た目半径）にするか。オフの場合は任意のSpriteRendererのBounds内クリックで判定します。")]
+    private bool useAutoClickArea = true;
+
+    [SerializeField, Tooltip("自動オフ時に使用するクリック領域のSpriteRenderer（Bounds内がクリック判定）。未設定時は赤丸半径にフォールバックします。")]
+    private SpriteRenderer clickAreaSpriteOverride;
+
     private Vector3 markerCenterWorld;
 
     void Start()
@@ -40,9 +47,19 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
         }
 
         SetupMarkerPosition();
-
-        // ✅ 赤丸の半径をSpriteRendererから自動で取得（ワールド単位）
-        UpdateMarkerRadiusFromSprite();
+        
+        // ✅ クリック判定の設定
+        if (useAutoClickArea)
+        {
+            // 赤丸の半径をSpriteRendererから自動で取得（ワールド単位）
+            UpdateMarkerRadiusFromSprite();
+        }
+        else if (clickAreaSpriteOverride == null)
+        {
+            // 自動オフだが代替Spriteがない場合は半径にフォールバック
+            UpdateMarkerRadiusFromSprite();
+            Debug.LogWarning("StickStartGuide2D: useAutoClickArea=false ですが clickAreaSpriteOverride が未設定のため、赤丸半径での判定にフォールバックします。");
+        }
 
         SetupDottedLine();
 
@@ -90,12 +107,26 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
 
     public bool TryOverrideStartPoint(Vector3 rawPressWorld, out Vector3 startWorld)
     {
-        float dist = Vector2.Distance(rawPressWorld, markerCenterWorld);
-        if (dist <= markerRadius)
+        if (useAutoClickArea || clickAreaSpriteOverride == null)
         {
-            startWorld = markerCenterWorld;
-            startWorld.z = 0f;
-            return true;
+            // 自動（半径）判定
+            float dist = Vector2.Distance(rawPressWorld, markerCenterWorld);
+            if (dist <= markerRadius)
+            {
+                startWorld = markerCenterWorld;
+                startWorld.z = 0f;
+                return true;
+            }
+        }
+        else
+        {
+            // 任意SpriteのBounds内クリックで判定
+            if (clickAreaSpriteOverride.bounds.Contains(rawPressWorld))
+            {
+                startWorld = markerCenterWorld;
+                startWorld.z = 0f;
+                return true;
+            }
         }
 
         startWorld = default;
@@ -155,9 +186,16 @@ public class StickStartGuide2D : MonoBehaviour, IStartPointOverride2D
     void OnDrawGizmos()
     {
         if (!Application.isPlaying) return;
-
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(markerCenterWorld, markerRadius);
+        if (useAutoClickArea || clickAreaSpriteOverride == null)
+        {
+            Gizmos.DrawWireSphere(markerCenterWorld, markerRadius);
+        }
+        else
+        {
+            var b = clickAreaSpriteOverride.bounds;
+            Gizmos.DrawWireCube(b.center, b.size);
+        }
     }
 #endif
 }
