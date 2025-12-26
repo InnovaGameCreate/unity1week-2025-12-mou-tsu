@@ -394,8 +394,9 @@ public class StickFitJudgeRx : MonoBehaviour
         // 角度を決定（2DではZ回転）
         float snapAngle = alignRotationAngles ? targetAngle : currentAngle;
 
-        // 反映
+        // 反映（スケール系ギミックの影響を無効化してから適用）
         var t = line.transform;
+        t.localScale = Vector3.one;
         t.position = new Vector3(snapCenter.x, snapCenter.y, t.position.z);
         t.rotation = Quaternion.Euler(0f, 0f, snapAngle);
 
@@ -407,6 +408,7 @@ public class StickFitJudgeRx : MonoBehaviour
 
         if (shadow != null)
         {
+            shadow.transform.localScale = Vector3.one;
             shadow.useWorldSpace = false;
             shadow.positionCount = 2;
             shadow.SetPosition(0, new Vector3(-snapLen * 0.5f, 0f, 0f));
@@ -420,6 +422,13 @@ public class StickFitJudgeRx : MonoBehaviour
         {
             box.size = new Vector2(snapLen, box.size.y);
             box.offset = Vector2.zero;
+        }
+
+        // クリア後はTriggerScaleByTagなどのギミックに反応しないよう、タグを"Untagged"に変更
+        line.gameObject.tag = "Untagged";
+        if (shadow != null)
+        {
+            shadow.gameObject.tag = "Untagged";
         }
     }
 
