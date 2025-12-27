@@ -76,6 +76,7 @@
     <Compile Include="Assets\Scripts\InGame\Animation\PerfectPopupAnimator.cs" />
     <Compile Include="Assets\Scripts\Score\ScoreAttackBootstrapper.cs" />
     <Compile Include="Assets\Scripts\InGame\Gimmick\TriggerScaleByTag.cs" />
+    <Compile Include="Assets\Scripts\InGame\Animation\FloatingFadePanel.cs" />
     <Compile Include="Assets\Scripts\InGame\Line\Judge\StickFitJudgeRx.cs" />
     <Compile Include="Assets\Scripts\Title\SampleTitleLogoAnim.cs" />
     <Compile Include="Assets\Scripts\InGame\Line\Judge\FitTargetSegment2D.cs" />
