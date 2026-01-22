@@ -2789,9 +2789,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.24074073
-    width: 0.23333335
-    height: 0.23333333
+    y: 0
+    width: 1
+    height: 1
   near clip plane: 0.3
   far clip plane: 10
   field of view: 60
@@ -2888,8 +2888,8 @@ MonoBehaviour:
   m_RefResolutionX: 960
   m_RefResolutionY: 540
   m_CropFrame: 4
-  m_GridSnapping: 2
-  m_FilterMode: 1
+  m_GridSnapping: 0
+  m_FilterMode: 0
   m_UpscaleRT: 0
   m_PixelSnapping: 0
   m_CropFrameX: 0
