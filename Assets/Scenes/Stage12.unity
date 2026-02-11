@@ -462,7 +462,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9158486931232404196, guid: 5f0780f1782484a45b265b5c5e219889, type: 3}
       propertyPath: m_text
-      value: Stage12
+      value: 'Stage12
+
+'
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -980,7 +982,7 @@ Transform:
   m_GameObject: {fileID: 420565813}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.94, y: -1.2, z: 0}
+  m_LocalPosition: {x: -1.38, y: -1.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1462,7 +1464,7 @@ Transform:
   m_GameObject: {fileID: 494411282}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.5, y: -0.03, z: 0}
+  m_LocalPosition: {x: 0.5, y: 0.37, z: 0}
   m_LocalScale: {x: 0.4, y: 0.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1673,7 +1675,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1553608624}
@@ -2408,7 +2410,7 @@ Transform:
   m_GameObject: {fileID: 892266380}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.38, y: -1.2, z: 0}
+  m_LocalPosition: {x: 1.84, y: -1.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2544,7 +2546,7 @@ Transform:
   m_GameObject: {fileID: 1035061999}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.007, y: 1.125, z: 0}
+  m_LocalPosition: {x: -0.58, y: 1.125, z: 0}
   m_LocalScale: {x: 0.3, y: 0.3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2727,7 +2729,7 @@ MonoBehaviour:
   targetSegment: {fileID: 430045646}
   startPointMarker: {fileID: 1035062001}
   dottedLine: {fileID: 1035062002}
-  useManualPosition: 0
+  useManualPosition: 1
   verticalOffset: 3
   showGuide: 0
   markerRadius: 1
@@ -2789,9 +2791,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.23333333
-    width: 0.23541668
-    height: 0.23541667
+    y: 0
+    width: 1
+    height: 1
   near clip plane: 0.3
   far clip plane: 10
   field of view: 60
@@ -3707,7 +3709,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1553608624
 Transform:
   m_ObjectHideFlags: 0
@@ -3955,7 +3957,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.05, y: -0.05, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1553608624}
