@@ -2991,6 +2991,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 188818922}
     - target: {fileID: 5083281032962052278, guid: c4b497ed5b9920b48a04097104b65665, type: 3}
+      propertyPath: extendSpeedPerSecond
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5083281032962052278, guid: c4b497ed5b9920b48a04097104b65665, type: 3}
       propertyPath: startPointOverrideSource
       value: 
       objectReference: {fileID: 1035062003}
@@ -4032,9 +4036,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   directionOrigin: {fileID: 1035062000}
-  cameraMoveSpeed: 3
-  holdSecondsStep: 3
-  moveLimitStep: 2
+  cameraMoveSpeed: 4
+  holdSecondsStep: 2
+  moveLimitStep: 3
   edgeActivationMargin: 0.272
   enableLog: 1
 --- !u!1 &1808316208

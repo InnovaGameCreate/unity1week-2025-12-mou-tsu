@@ -2373,9 +2373,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
-    width: 1
-    height: 1
+    y: 0.23333333
+    width: 0.23541668
+    height: 0.23541667
   near clip plane: 0.3
   far clip plane: 10
   field of view: 60
@@ -3021,6 +3021,10 @@ PrefabInstance:
       propertyPath: countdownPresenter
       value: 
       objectReference: {fileID: 188818922}
+    - target: {fileID: 5083281032962052278, guid: c4b497ed5b9920b48a04097104b65665, type: 3}
+      propertyPath: extendSpeedPerSecond
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5083281032962052278, guid: c4b497ed5b9920b48a04097104b65665, type: 3}
       propertyPath: startPointOverrideSource
       value: 
@@ -4061,9 +4065,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   viewportOrigin: {x: 0.5, y: 0.5}
-  cameraMoveSpeed: 2
-  holdSecondsStep: 3
-  moveLimitStep: 1.5
+  worldOriginTransform: {fileID: 1035062000}
+  cameraMoveSpeed: 4
+  holdSecondsStep: 2
+  moveLimitStep: 3
   edgeActivationMargin: 0.272
   enableLog: 1
 --- !u!1 &1808316208

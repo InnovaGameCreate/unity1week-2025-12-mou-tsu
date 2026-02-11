@@ -2,14 +2,21 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// 長押し中にカメラを移動させる（方向は画面の固定位置基準）。
-/// 方向 = 指定ビューポート位置 → 長押し位置 のベクトル。
+/// 長押し中にカメラを移動させる。
+/// カーソルのワールドY座標が worldOriginTransform より上の場合:
+///   方向 = worldOriginTransform のワールド座標 → カーソルのワールド座標
+/// それ以外の場合:
+///   方向 = ビューポート基準点 → カーソルのビューポート座標
 /// </summary>
 public class LineHeadCameraFollowViewportOrigin : MonoBehaviour
 {
     [Header("方向の基準点（画面固定）")]
     [SerializeField, Tooltip("ビューポート座標での基準点（0-1）。例: 0.5,0.5 は画面中央")]
     private Vector2 viewportOrigin = new Vector2(0.5f, 0.5f);
+
+    [Header("ワールド座標基準点（カーソルがこの座標より上の場合に使用）")]
+    [SerializeField, Tooltip("カーソルのワールドY座標がこのTransformより上にある場合、ここを基準点としてワールド座標で方向を計算する")]
+    private Transform worldOriginTransform;
 
     [Header("カメラ移動設定")]
     [SerializeField, Tooltip("カメラの移動速度（ワールド単位/秒）")]
@@ -88,14 +95,31 @@ public class LineHeadCameraFollowViewportOrigin : MonoBehaviour
             return;
         }
 
-        Vector2 dirVp = new Vector2(pressVp.x - viewportOrigin.x, pressVp.y - viewportOrigin.y);
-        if (dirVp.sqrMagnitude < 0.0001f) return;
-        dirVp.Normalize();
+        // カーソルのワールド座標を取得
+        Vector3 cursorWorld = mainCam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, Mathf.Abs(mainCam.transform.position.z)));
 
-        Vector3 worldDir = mainCam.transform.right * dirVp.x + mainCam.transform.up * dirVp.y;
-        worldDir.z = 0f;
-        if (worldDir.sqrMagnitude < 0.0001f) return;
-        worldDir.Normalize();
+        Vector3 worldDir;
+
+        // カーソルのワールドY座標が worldOriginTransform より上にある場合はワールド座標基準
+        if (worldOriginTransform != null && cursorWorld.y > worldOriginTransform.position.y)
+        {
+            Vector2 dirWorld = new Vector2(cursorWorld.x - worldOriginTransform.position.x, cursorWorld.y - worldOriginTransform.position.y);
+            if (dirWorld.sqrMagnitude < 0.0001f) return;
+            dirWorld.Normalize();
+            worldDir = new Vector3(dirWorld.x, dirWorld.y, 0f);
+            LogThrottled($"ViewportOriginCam: WORLD mode cursorY={cursorWorld.y:F2} thresholdY={worldOriginTransform.position.y:F2}");
+        }
+        else
+        {
+            // ビューポート基準点からの方向で計算（従来の動作）
+            Vector2 dirVp = new Vector2(pressVp.x - viewportOrigin.x, pressVp.y - viewportOrigin.y);
+            if (dirVp.sqrMagnitude < 0.0001f) return;
+            dirVp.Normalize();
+            worldDir = mainCam.transform.right * dirVp.x + mainCam.transform.up * dirVp.y;
+            worldDir.z = 0f;
+            if (worldDir.sqrMagnitude < 0.0001f) return;
+            worldDir.Normalize();
+        }
 
         Vector3 camPos = mainCam.transform.position;
         float movedSoFar = Vector2.Distance(new Vector2(camPos.x, camPos.y), new Vector2(holdStartCamPos.x, holdStartCamPos.y));

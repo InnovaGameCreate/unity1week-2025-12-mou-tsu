@@ -611,8 +611,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   drawer: {fileID: 1595529137}
   target: {fileID: 430045646}
-  lengthTolerancePercent: 0.05
-  angleToleranceDeg: 6
+  lengthTolerancePercent: 0.07
+  angleToleranceDeg: 8
   perpendicularToleranceMultiplier: 1
   failYThreshold: -10
   snapLengthToTarget: 1
@@ -1686,9 +1686,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.23333333
-    width: 0.23541668
-    height: 0.23541667
+    y: 0
+    width: 1
+    height: 1
   near clip plane: 0.3
   far clip plane: 10
   field of view: 60
