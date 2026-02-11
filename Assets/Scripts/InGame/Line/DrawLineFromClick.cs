@@ -10,6 +10,11 @@ public class DrawLineFromClick : MonoBehaviour
     [SerializeField, Tooltip("押している間に1秒あたり増えるワールド単位の長さ")]
     private float extendSpeedPerSecond = 2f;
 
+    /// <summary>
+    /// 外部から速度倍率を掛ける（デフォルト1.0）。ステージ固有ギミック用。
+    /// </summary>
+    public float SpeedMultiplier { get; set; } = 1f;
+
     [Header("生成するLineRenderer（Prefab推奨）")]
     [SerializeField] private LineRenderer linePrefab;
 
@@ -173,7 +178,7 @@ public class DrawLineFromClick : MonoBehaviour
                 if (dir.sqrMagnitude > 0.000001f)
                     lastDir = dir.normalized;
 
-                currentLength += extendSpeedPerSecond * Time.deltaTime;
+                currentLength += extendSpeedPerSecond * SpeedMultiplier * Time.deltaTime;
                 currentEndPos = startPos + lastDir * currentLength;
 
                 currentLine.SetPosition(1, currentEndPos);

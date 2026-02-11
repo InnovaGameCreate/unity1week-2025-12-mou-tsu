@@ -57,6 +57,7 @@
     <Compile Include="Assets\Scripts\AudioManager.cs" />
     <Compile Include="Assets\Scripts\InGame\Gimmick\Blink\BlinkingClearGateRx.cs" />
     <Compile Include="Assets\Scripts\Title\ScoreAttackButton.cs" />
+    <Compile Include="Assets\Scripts\InGame\Gimmick\LineSpeedPulseController.cs" />
     <Compile Include="Assets\Scripts\Score\ScoreAttackTimeHud.cs" />
     <Compile Include="Assets\Scripts\InGame\StageManagement\ToTitleButton.cs" />
     <Compile Include="Assets\Scripts\InGame\Line\Judge\FitRateTextPresenterRx.cs" />

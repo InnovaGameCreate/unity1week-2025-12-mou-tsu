@@ -1126,37 +1126,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &660598572
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 660598573}
-  m_Layer: 0
-  m_Name: CameraStartTransform
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &660598573
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 660598572}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1808316209}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &694004998
 GameObject:
   m_ObjectHideFlags: 0
@@ -1964,7 +1933,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   judge: {fileID: 430045647}
-  nextSceneName: Stage16
+  nextSceneName: Title
   persistRoot: {fileID: 1791296829}
   cutInRect: {fileID: 1006219129}
   waitSeconds: 2.5
@@ -2128,7 +2097,7 @@ Transform:
   m_GameObject: {fileID: 1035061999}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.007, y: 3.18, z: 0}
+  m_LocalPosition: {x: 0.007, y: 1.125, z: 0}
   m_LocalScale: {x: 0.3, y: 0.3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2311,7 +2280,7 @@ MonoBehaviour:
   targetSegment: {fileID: 430045646}
   startPointMarker: {fileID: 1035062001}
   dottedLine: {fileID: 1035062002}
-  useManualPosition: 1
+  useManualPosition: 0
   verticalOffset: 1
   showGuide: 0
   markerRadius: 1
@@ -3030,6 +2999,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c4b497ed5b9920b48a04097104b65665, type: 3}
+--- !u!114 &1451368750 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7007859847362273473, guid: c4b497ed5b9920b48a04097104b65665, type: 3}
+  m_PrefabInstance: {fileID: 1451368749}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d839d9c90bbfcd048ac96051dfb9c2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1478641625
 GameObject:
   m_ObjectHideFlags: 0
@@ -3476,7 +3456,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9158486931232404196, guid: 5f0780f1782484a45b265b5c5e219889, type: 3}
       propertyPath: m_text
-      value: Stage15
+      value: Stage16
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3881,7 +3861,7 @@ Transform:
   m_GameObject: {fileID: 1751731402}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.18, y: 0, z: 0}
+  m_LocalPosition: {x: 7.91, y: 0.18, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4025,7 +4005,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1794071271}
-  - component: {fileID: 1794071273}
+  - component: {fileID: 1794071272}
   m_Layer: 0
   m_Name: LineHeadCameraFollow
   m_TagString: Untagged
@@ -4048,7 +4028,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1794071273
+--- !u!114 &1794071272
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4057,13 +4037,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1794071270}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31da03cf0557c884f81f3fe898ef1901, type: 3}
+  m_Script: {fileID: 11500000, guid: f44fcbaf42df048448bd1ec4eb653ebb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  viewportOrigin: {x: 0.5, y: 0.5}
-  cameraMoveSpeed: 2
-  holdSecondsStep: 3
-  moveLimitStep: 1.5
+  directionOrigin: {fileID: 1035062000}
+  cameraMoveSpeed: 3
+  holdSecondsStep: 2
+  moveLimitStep: 5
   edgeActivationMargin: 0.272
   enableLog: 1
 --- !u!1 &1808316208
@@ -4106,7 +4086,7 @@ Transform:
   - {fileID: 1751731403}
   - {fileID: 1035062000}
   - {fileID: 1583382228}
-  - {fileID: 660598573}
+  - {fileID: 2137239666}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2100037041
@@ -4196,6 +4176,67 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &2137239665
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2137239666}
+  - component: {fileID: 2137239667}
+  m_Layer: 0
+  m_Name: LineSpeedPulseController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2137239666
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2137239665}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1808316209}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2137239667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2137239665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 408f47d1ccb8e8c418b26d03ce64d818, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  drawer: {fileID: 1595529137}
+  drawSystemFactory: {fileID: 1451368750}
+  normalSeconds: 2
+  boostSeconds: 0.2
+  boostMultiplier: 20
+  pulseSprites:
+  - {fileID: 885072915}
+  - {fileID: 694005000}
+  - {fileID: 508899588}
+  - {fileID: 1560692209}
+  - {fileID: 2100037043}
+  - {fileID: 1371328624}
+  - {fileID: 149520164}
+  - {fileID: 1034134832}
+  - {fileID: 702589853}
+  boostColor: {r: 1, g: 0.101960786, b: 0, a: 1}
+  enableLog: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

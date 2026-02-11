@@ -832,7 +832,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   drawer: {fileID: 1595529137}
   target: {fileID: 430045646}
-  lengthTolerancePercent: 0.05
+  lengthTolerancePercent: 0.005
   angleToleranceDeg: 6
   perpendicularToleranceMultiplier: 1
   failYThreshold: -10
@@ -3445,7 +3445,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9158486931232404196, guid: 5f0780f1782484a45b265b5c5e219889, type: 3}
       propertyPath: m_text
-      value: Stage14
+      value: 'Stage14
+
+'
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
