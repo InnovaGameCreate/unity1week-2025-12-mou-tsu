@@ -12,6 +12,8 @@ public class DrawLineSystemFactory : MonoBehaviour
     [SerializeField, Tooltip("生成したインスタンスをぶら下げる親。未設定なら呼び出し元の親を利用" )]
     private Transform parentForInstances;
 
+    public event System.Action<DrawLineFromClick> OnDrawerCreated;
+
     /// <summary>
     /// DrawLineFromClick インスタンスを生成し、必須参照を補完した上で描画開始する。
     /// </summary>
@@ -39,6 +41,7 @@ public class DrawLineSystemFactory : MonoBehaviour
         }
 
         drawer.CopyMissingReferencesFrom(source);
+        OnDrawerCreated?.Invoke(drawer);
         drawer.BeginDrawAt(startPos);
         return drawer;
     }

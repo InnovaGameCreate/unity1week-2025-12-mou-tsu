@@ -52,6 +52,8 @@ public class DrawLineFromClick : MonoBehaviour
     private float currentLength;
     private Vector3 lastDir; // 正規化方向（方向だけマウスに追従）
     private bool isDrawing;
+    public bool IsDrawing => isDrawing;
+    public Vector3 CurrentEndPos => currentEndPos;
     private bool hasDrawnOnce;
     private bool canInput;
     private bool hasForcedStart;
